@@ -93,9 +93,9 @@ export async function openDatabase(config: CoreConfig): Promise<Database> {
   };
 }
 
-export const latestMigration = 4;
+export const latestMigration = 5;
 export async function migrate(database: Database, throughVersion = latestMigration): Promise<void> {
-  const files = ['001_private_trips.sql', '002_premium_planner.sql', '003_selected_expense_splits.sql', '004_trip_planning.sql'];
+  const files = ['001_private_trips.sql', '002_premium_planner.sql', '003_selected_expense_splits.sql', '004_trip_planning.sql', '005_reel_ideas.sql'];
   const migrations = await Promise.all(files.slice(0, throughVersion).map((file) => readFile(new URL(`../migrations/${file}`, import.meta.url), 'utf8')));
   await database.transaction(async (client) => {
     // Serialize concurrent deploys on PostgreSQL; the lock is transaction-scoped.

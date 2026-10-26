@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return response;
     }
     if (action === "register") {
-      if (!text("displayName").trim() || text("displayName").length > 80 || text("password").length < 8 || text("password").length > 256) return failure("VALIDATION_ERROR", "Use a name up to 80 characters and a password of at least 8 characters.", 400);
+      if (!text("displayName").trim() || text("displayName").length > 80 || text("password").length < 12 || text("password").length > 256) return failure("VALIDATION_ERROR", "Use a name up to 80 characters and a password of at least 12 characters.", 400);
       const result = await client().send(new SignUpCommand({ ClientId, Username: email, Password: text("password"), UserAttributes: [{ Name: "email", Value: email }, { Name: "name", Value: text("displayName").trim() }] }));
       return reply({ ok: true, confirmed: Boolean(result.UserConfirmed) });
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (name === "UserNotConfirmedException") return failure("UNCONFIRMED", "Verify your email using the code you received, then sign in.", 409);
     if (["CodeMismatchException", "ExpiredCodeException"].includes(name)) return failure("VALIDATION_ERROR", "The verification code is incorrect or expired.", 400);
     if (name === "UsernameExistsException") return failure("CONFLICT", "An account may already use this email. Try signing in or resetting your password.", 409);
-    if (name === "InvalidPasswordException") return failure("VALIDATION_ERROR", "Your password does not meet the account password rules. Use upper and lower case letters, a number, and a symbol.", 400);
+    if (name === "InvalidPasswordException") return failure("VALIDATION_ERROR", "Your password does not meet the account password rules. Use at least 12 characters with upper and lower case letters, a number, and a symbol.", 400);
     if (["NotAuthorizedException", "UserNotFoundException"].includes(name)) return failure("UNAUTHENTICATED", "Unable to sign in with these details. Check them or reset your password.", 401);
     if (["TooManyRequestsException", "LimitExceededException"].includes(name)) return failure("RATE_LIMITED", "Too many attempts. Please wait before trying again.", 429);
     return failure("SERVICE_UNAVAILABLE", "The account service is unavailable. Please try again.", 503);

@@ -1,11 +1,134 @@
 "use client";
+
 import { useState } from "react";
-import { Check, Copy, Link2, Plus, ShieldCheck, X } from "lucide-react";
+import { Check, Copy, Link2, MoreHorizontal, Plus, ShieldCheck, X } from "lucide-react";
 import { api, core, type Invitation, type TripDetail } from "@/lib/client";
 import { useSession } from "./session";
 import { Busy, Dialog, Notice } from "./ui";
+
 export function PeoplePanel({ detail, onChanged }: { detail: TripDetail; onChanged: () => Promise<void> }) {
-  const { user } = useSession(); const { trip, members, invitations } = detail; const [busy, setBusy] = useState(""); const [error, setError] = useState(""); const [message, setMessage] = useState(""); const [link, setLink] = useState(""); const [copied, setCopied] = useState(false); const [removing, setRemoving] = useState(""); const accepted = members.filter(item => item.status === "accepted"); const pending = members.filter(item => item.status === "pending");
-  const action = async (key: string, work: () => Promise<void>) => { if (busy) return; setBusy(key); setError(""); setMessage(""); try { await work(); await onChanged(); } catch (e) { setError(e instanceof Error ? e.message : "Unable to update access."); } finally { setBusy(""); } };
-  return <section><div className="section-heading"><div><span className="eyebrow">IT’S THE COMPANY THAT MAKES IT</span><h2>Your little circle <span className="count">{accepted.length}</span></h2></div><span className="quiet-badge"><ShieldCheck size={14} />{trip.role === "organiser" ? "You manage access" : "Accepted member"}</span></div><p className="tab-intro">Only accepted members see this trip. Planned traveller count is a separate planning number; it never grants access.</p>{error && <Notice>{error}</Notice>}{message && <Notice tone="success">{message}</Notice>}<div className="people-layout"><div className="panel member-panel">{accepted.map(member => <div className="member-row" key={member.userId}><span className={`avatar ${member.role === "organiser" ? "coral" : ""}`}>{member.displayName[0]}</span><div className="member-name"><strong>{member.displayName}{member.userId === user?.id && <span> (you)</span>}</strong><small>{member.role === "organiser" ? "Trip organiser" : "Trip member"}</small></div>{member.role === "organiser" ? <span className="organiser-label">ORGANISER</span> : trip.role === "organiser" ? <button className="text-button danger" disabled={Boolean(busy)} onClick={() => setRemoving(member.userId)}>Remove</button> : <Check size={17} />}</div>)}{trip.role === "organiser" && pending.length > 0 && <div className="pending-members"><h4>Waiting at the door <span>{pending.length}</span></h4><p>Approve a request to share the trip.</p>{pending.map(member => <div className="pending-row" key={member.userId}><span className="avatar">{member.displayName[0]}</span><strong>{member.displayName}</strong><button className="button compact primary" disabled={Boolean(busy)} onClick={() => void action(`approve-${member.userId}`, async () => { await api(`${core}/trips/${trip.id}/members/${member.userId}/approve`, { method: "POST", body: "{}" }); setMessage(`${member.displayName} can now see this trip.`); })}>{busy === `approve-${member.userId}` ? <Busy text="" /> : <Check size={15} />}Approve</button><button className="icon-button" aria-label={`Decline ${member.displayName}’s request`} disabled={Boolean(busy)} onClick={() => setRemoving(member.userId)}><X size={18} /></button></div>)}</div>}</div><div className="invite-panel"><span className="round-icon"><Link2 size={23} /></span><h3>{trip.role === "organiser" ? "Good company starts with an invitation." : "A private little circle."}</h3><p>{trip.role === "organiser" ? "Create a private link, send it to your people, then approve each request. Links expire after seven days." : "The organiser manages invitations and approves new members. Only accepted members can see the trip."}</p>{trip.role === "organiser" && <><button className="button primary full" disabled={Boolean(busy)} onClick={() => void action("invite", async () => { const result = await api<{ invitation: Invitation & { token: string } }>(`${core}/trips/${trip.id}/invitations`, { method: "POST", body: JSON.stringify({ requiresApproval: true }) }); setLink(`${window.location.origin}/join#token=${encodeURIComponent(result.invitation.token)}`); setCopied(false); })}>{busy === "invite" ? <Busy text="Creating invitation…" /> : <><Plus size={17} />Create invite link</>}</button><p className="form-note"><ShieldCheck size={14} />Organiser approval is always required.</p>{link && <div className="generated-link"><label htmlFor="invite-url">Your private link — shown only this time</label><textarea readOnly id="invite-url" rows={3} value={link} onFocus={e => e.target.select()} /><button className="button secondary full" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setError("Clipboard access was unavailable. Select the link above and copy it manually."); } }}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Copied to clipboard" : "Copy invitation"}</button><p>Keep it private. Only its secure hash is stored.</p></div>}</>}</div></div>{trip.role === "organiser" && invitations.length > 0 && <div className="invitation-list"><h4>Invitation links</h4>{invitations.map((invitation, index) => { const expired = new Date(invitation.expiresAt).getTime() <= Date.now(); return <div className="invitation-row" key={invitation.id}><Link2 size={17} /><div><strong>Invitation {invitations.length - index}</strong><small>{invitation.revoked ? "Revoked · no new joins" : expired ? "Expired" : `Expires ${new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" }).format(new Date(invitation.expiresAt))} · approval required`}</small></div><span className={`invite-status ${invitation.revoked || expired ? "inactive" : ""}`}>{invitation.revoked ? "Revoked" : expired ? "Expired" : "Active"}</span>{!invitation.revoked && !expired && <button className="text-button danger" disabled={Boolean(busy)} onClick={() => void action(invitation.id, async () => { await api(`${core}/trips/${trip.id}/invitations/${invitation.id}`, { method: "DELETE" }); setLink(""); setMessage("Invitation revoked. No new requests can use it."); })}>Revoke</button>}</div>; })}</div>}{removing && <Dialog title="Remove this person?" onClose={() => setRemoving("")} busy={Boolean(busy)}><p>They will lose trip access immediately. An old invitation will not let them rejoin.</p>{error && <Notice>{error}</Notice>}<div className="dialog-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => setRemoving("")}>Keep access</button><button className="button destructive" disabled={Boolean(busy)} onClick={() => void action("remove", async () => { await api(`${core}/trips/${trip.id}/members/${removing}`, { method: "DELETE" }); setRemoving(""); setMessage("Access removed. This person can no longer see the trip."); })}>{busy ? <Busy /> : "Remove access"}</button></div></Dialog>}</section>;
+  const { user } = useSession();
+  const { trip, members, invitations } = detail;
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [link, setLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [removing, setRemoving] = useState("");
+  const accepted = members.filter((item) => item.status === "accepted");
+  const pending = members.filter((item) => item.status === "pending");
+
+  const action = async (key: string, work: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(key);
+    setError("");
+    setMessage("");
+    try { await work(); await onChanged(); }
+    catch (e) { setError(e instanceof Error ? e.message : "Unable to update access."); }
+    finally { setBusy(""); }
+  };
+
+  return (
+    <section>
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">IT’S THE COMPANY THAT MAKES IT</span>
+          <h2>Your little circle <span className="count">{accepted.length}</span></h2>
+        </div>
+        <span className="quiet-badge"><ShieldCheck size={14} />{trip.role === "organiser" ? "You manage access" : "Accepted member"}</span>
+      </div>
+      <p className="tab-intro">Only accepted members can see this trip. Planned traveller count is a separate planning number; it never grants access.</p>
+      {error && <Notice>{error}</Notice>}
+      {message && <Notice tone="success">{message}</Notice>}
+      <div className="people-layout">
+        <div className="panel member-panel">
+          <h3 className="people-group-title">Accepted members ({accepted.length})</h3>
+          {accepted.map((member) => (
+            <div className="member-row" key={member.userId}>
+              <span className={`avatar ${member.role === "organiser" ? "coral" : ""}`}>{member.displayName[0]}</span>
+              <div className="member-name">
+                <strong>{member.displayName}{member.userId === user?.id && <span> (you)</span>}</strong>
+                <small>{member.role === "organiser" ? "Trip organiser" : "Trip member"}</small>
+              </div>
+              {member.role === "organiser" ? <span className="organiser-label">ORGANISER</span> : trip.role === "organiser" ? (
+                <details className="member-menu">
+                  <summary aria-label={`Actions for ${member.displayName}`}><MoreHorizontal size={18} /></summary>
+                  <button className="text-button danger" disabled={Boolean(busy)} onClick={() => setRemoving(member.userId)}>Remove</button>
+                </details>
+              ) : <Check size={17} />}
+            </div>
+          ))}
+          {trip.role === "organiser" && pending.length > 0 && (
+            <div className="pending-members">
+              <h4>Waiting for approval <span>{pending.length}</span></h4>
+              <p>Approve a request to share the trip.</p>
+              {pending.map((member) => (
+                <div className="pending-row" key={member.userId}>
+                  <span className="avatar">{member.displayName[0]}</span>
+                  <strong>{member.displayName}</strong>
+                  <button className="button compact coral" disabled={Boolean(busy)} onClick={() => void action(`approve-${member.userId}`, async () => { await api(`${core}/trips/${trip.id}/members/${member.userId}/approve`, { method: "POST", body: "{}" }); setMessage(`${member.displayName} can now see this trip.`); })}>{busy === `approve-${member.userId}` ? <Busy text="" /> : <Check size={15} />}Approve</button>
+                  <button className="button compact secondary" disabled={Boolean(busy)} onClick={() => setRemoving(member.userId)}><X size={16} />Decline</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="invite-panel">
+          <div className="goa-scene" aria-hidden="true"><span>Good company<br />starts here.</span></div>
+          <span className="round-icon"><Link2 size={23} /></span>
+          <h3>{trip.role === "organiser" ? "Good company starts with an invitation." : "A private little circle."}</h3>
+          <p>{trip.role === "organiser" ? "Share a private invite link with people you want on this trip. Organiser approval is required." : "The organiser manages invitations and approves new members. Only accepted members can see the trip."}</p>
+          {trip.role === "organiser" && (
+            <>
+              <button className="button coral full" disabled={Boolean(busy)} onClick={() => void action("invite", async () => {
+                const result = await api<{ invitation: Invitation & { token: string } }>(`${core}/trips/${trip.id}/invitations`, { method: "POST", body: JSON.stringify({ requiresApproval: true }) });
+                setLink(`${window.location.origin}/join#token=${encodeURIComponent(result.invitation.token)}`);
+                setCopied(false);
+              })}>{busy === "invite" ? <Busy text="Creating invitation…" /> : <><Plus size={17} />Create invite link</>}</button>
+              <p className="form-note"><ShieldCheck size={14} />Invites are private. Only you can create links and manage who joins.</p>
+              {link && (
+                <div className="generated-link">
+                  <label htmlFor="invite-url">Trip invite link — shown only this time</label>
+                  <textarea readOnly id="invite-url" rows={3} value={link} onFocus={(event) => event.target.select()} />
+                  <button className="button secondary full" onClick={async () => { try { await navigator.clipboard.writeText(link); setCopied(true); } catch { setError("Clipboard access was unavailable. Select the link above and copy it manually."); } }}>{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Copied to clipboard" : "Copy invitation"}</button>
+                  <p>Keep it private. Only its secure hash is stored, so an older link cannot be copied again from this list.</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      {trip.role === "organiser" && invitations.length > 0 && (
+        <div className="invitation-list">
+          <h4>Invitation links</h4>
+          {invitations.map((invitation, index) => {
+            const expired = new Date(invitation.expiresAt).getTime() <= Date.now();
+            return (
+              <div className="invitation-row" key={invitation.id}>
+                <Link2 size={17} />
+                <div>
+                  <strong>Invitation {invitations.length - index}</strong>
+                  <small>{invitation.revoked ? "Revoked · no new joins" : expired ? "Expired" : `Expires ${new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" }).format(new Date(invitation.expiresAt))} · approval required`}</small>
+                </div>
+                <span className={`invite-status ${invitation.revoked || expired ? "inactive" : ""}`}>{invitation.revoked ? "Revoked" : expired ? "Expired" : "Active"}</span>
+                {!invitation.revoked && !expired && (
+                  <button className="text-button danger" disabled={Boolean(busy)} onClick={() => void action(invitation.id, async () => { await api(`${core}/trips/${trip.id}/invitations/${invitation.id}`, { method: "DELETE" }); setLink(""); setMessage("Invitation revoked. No new requests can use it."); })}>Revoke</button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {removing && (
+        <Dialog title="Remove this person?" onClose={() => setRemoving("")} busy={Boolean(busy)}>
+          <p>They will lose trip access immediately. An old invitation will not let them rejoin.</p>
+          {error && <Notice>{error}</Notice>}
+          <div className="dialog-actions">
+            <button className="button secondary" disabled={Boolean(busy)} onClick={() => setRemoving("")}>Keep access</button>
+            <button className="button destructive" disabled={Boolean(busy)} onClick={() => void action("remove", async () => { await api(`${core}/trips/${trip.id}/members/${removing}`, { method: "DELETE" }); setRemoving(""); setMessage("Access removed. This person can no longer see the trip."); })}>{busy ? <Busy /> : "Remove access"}</button>
+          </div>
+        </Dialog>
+      )}
+    </section>
+  );
 }

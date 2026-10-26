@@ -20,8 +20,8 @@
 | 4 | Budget limits (only after no other child has `planning-repository.ts` open) | Integrated. Budget-limit tests passed inside `npm test`. |
 | — | Integrate batch 2, `npm test`, verifier, tester, one fix pass, then a `plan.md` status paragraph | Done. No product fix. Status paragraph is in `plan.md`. Phone layout for this batch was not checked. |
 | 5 | Itinerary additions (after `BookingLinkPicker` and `ActivityComments` exist) | In progress |
-| 6 | Today dashboard (mounts panels in `workspace.tsx`) | Waiting |
-| — | Integrate batch 3, `npm test`, `npm run test:discovery`, typecheck, verifier, tester, one fix pass, `plan.md` status paragraph, stop | Waiting |
+| 6 | Today dashboard (mounts panels in `workspace.tsx`) | Integrated. Overview test passed. Today and the plan card were clicked at 390×844. |
+| — | Integrate batch 3, `npm test`, `npm run test:discovery`, typecheck, verifier, tester, one fix pass, `plan.md` status paragraph, stop | Done. No product fix. Status paragraph is in plan.md. Phone layout was checked at 390px. |
 
 At most three children at once. Feature agents do not edit `plan.md`.
 
@@ -155,7 +155,7 @@ Document uploads, receipts, PDF export, trip archiving, account controls, conten
 
 ## Next batch (do not implement)
 
-After batch 3's tester finishes, record and stop: shared and private uploads, receipts, PDF export, trip archiving, and events, unless a tighter dependency-ready set is already in `plan.md`.
+Not started. After the trip-planning half, the next batch is shared and private uploads, receipts, PDF export, trip archiving, and events. Do not implement it in this run.
 
 ## Integration log
 
@@ -173,3 +173,4 @@ After batch 3's tester finishes, record and stop: shared and private uploads, re
 - 21 October 2026: [Verifier](ecdf2d85-bd3d-4179-8a98-369cdd6f3379) recorded batch 1 in `docs/verification/07-trip-planning-half.md`. 7 pass, 0 fail, 7 not tested. No feature hand-back. The only red tests are the frozen migration snapshot. Browser testing starts next.
 - 21 October 2026: [Tester](cac7172a-4f4e-45d7-837c-bae651d82888) passed batch 1 flows over HTTP on trip `goa with friends` after one allowed `dev:local` restart. Phone viewport 390×844 was used for The plan, Saved places, Budget & splits, and Your people. The four new panels were not mounted, so their layout was not clicked. No flow failure, so there was no fix pass. The batch 1 status paragraph is in `plan.md`.
 - 21 October 2026, wave 3 integrated: votes, comments, and bookings each call `membership`. `npm test`: web 15 passed; core 91 passed and 2 failed. The failures are only `planning.test.ts` line 65 and its parent. Save, unsave, budget, and ledger checks passed. The vote delete in `unsavePlace` was left in place. [Budget](11111480-45c8-4124-b659-dab44351feaf) is the only child now.
+- 26 October 2026: [Tester](9c4cd7b4-983e-4f29-8f4d-6ae080b86717) clicked flow 9 on the activity card and flow 10 on Today at 390×844. Cancelled activity stayed listed. Today showed the future flight, the current stay, and contacts, with no weather or reminder widget. Today had no activity because the trip dates exclude 26 Oct. No product failure. The half stops here.

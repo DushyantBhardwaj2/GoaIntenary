@@ -10,6 +10,7 @@ import { registerActivityExtraRoutes } from './activity-extra-routes.js';
 import { registerBudgetLimitRoutes } from './budget-limit-routes.js';
 import { registerChecklistRoutes } from './checklist-routes.js';
 import { registerOverviewRoutes } from './overview-routes.js';
+import { registerReelIdeaRoutes } from './reel-idea-routes.js';
 
 export function registerTripPlanningRoutes(app: FastifyInstance, core: TripRepository): void {
   registerTravelRoutes(app, core);
@@ -22,4 +23,5 @@ export function registerTripPlanningRoutes(app: FastifyInstance, core: TripRepos
   registerBudgetLimitRoutes(app, core);
   registerChecklistRoutes(app, core);
   registerOverviewRoutes(app, core);
+  registerReelIdeaRoutes(app, core);
 }

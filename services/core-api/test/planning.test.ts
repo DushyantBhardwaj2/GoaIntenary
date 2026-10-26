@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import type { FastifyInstance, InjectOptions } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
-import { migrate, openDatabase } from '../src/database.js';
+import { latestMigration, migrate, openDatabase } from '../src/database.js';
 import { exactTotal, perPerson } from '../src/money.js';
 import { hash } from '../src/repository.js';
 import type { Activity, Expense, Trip } from '../src/types.js';
@@ -62,7 +62,7 @@ test('premium planner persists private itinerary and spending with additive migr
 
     await t.test('v1 trip, membership and invitation survive repeatable migration with safe defaults',async () => {
       const versions = await database.query<{ version: number }>('SELECT version FROM goa_core_migrations ORDER BY version');
-      assert.deepEqual(versions.map((row) => row.version),[1,2,3,4]);
+      assert.deepEqual(versions.map((row) => row.version), Array.from({ length: latestMigration }, (_, i) => i + 1));
       const response = await request(0,'GET',`/v1/trips/${legacyId}`);
       assert.equal(response.statusCode,200);
       assert.equal(response.json().trip.name,'Existing v1 trip');

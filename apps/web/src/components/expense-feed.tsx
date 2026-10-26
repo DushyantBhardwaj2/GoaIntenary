@@ -7,7 +7,7 @@ import { money } from "@/lib/money";
 import styles from "./expense-workspace.module.css";
 
 const categoryIcons: Record<string, typeof Receipt> = { accommodation: BedDouble, transport: Car, food: Coffee, activities: Sparkles, shopping: ShoppingBag };
-const fullDate = (date: string) => new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(`${date}T12:00:00+05:30`));
+const fullDate = (date: string) => new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(`${date}T12:00:00+05:30`));
 
 export function ExpenseFeed({ expenses, userId, organiser, hasRepayments, onAdd, onEdit, onDelete }: {
   expenses: Expense[]; userId?: string; organiser: boolean; hasRepayments: boolean;
@@ -23,8 +23,8 @@ export function ExpenseFeed({ expenses, userId, organiser, hasRepayments, onAdd,
   ).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
   const groups = new Map<string, Expense[]>();
   for (const expense of filtered) {
-    const key = expense.date.slice(0, 7), rows = groups.get(key) ?? [];
-    rows.push(expense); groups.set(key, rows);
+    const rows = groups.get(expense.date) ?? [];
+    rows.push(expense); groups.set(expense.date, rows);
   }
   return <section className={styles.feed} aria-label="Shared expenses">
     <div className={styles.feedToolbar}>
@@ -38,8 +38,8 @@ export function ExpenseFeed({ expenses, userId, organiser, hasRepayments, onAdd,
     <div className={styles.feedCaption}><span>{query || filter !== "all" ? `${filtered.length} of ${expenses.length}` : expenses.length} {expenses.length === 1 ? "expense" : "expenses"}</span><span>Most recent first</span></div>
     {!expenses.length ? <div className={styles.empty}>
       <span className={styles.emptyIcon}><Receipt size={27} strokeWidth={1.5} /></span><h3>The first bill starts here.</h3><p>Dinner for four? A taxi for two? Choose who paid and just the people who shared it.</p><button type="button" className={styles.primaryButton} onClick={onAdd}><Plus size={17} />Add your first expense</button><small>Members and named guests can share a bill.</small>
-    </div> : !filtered.length ? <div className={styles.empty}><Search size={25} /><h3>No matching expenses</h3><p>Try a different name or show all expenses.</p><button type="button" className={styles.secondaryButton} onClick={() => { setQuery(""); setFilter("all"); }}>Clear filters</button></div> : [...groups].map(([month, items]) => <div key={month}>
-      <h3 className={styles.monthHeading}>{new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(`${month}-01T12:00:00+05:30`))}</h3>
+    </div> : !filtered.length ? <div className={styles.empty}><Search size={25} /><h3>No matching expenses</h3><p>Try a different name or show all expenses.</p><button type="button" className={styles.secondaryButton} onClick={() => { setQuery(""); setFilter("all"); }}>Clear filters</button></div> : [...groups].map(([day, items]) => <div key={day}>
+      <h3 className={styles.dayHeading}><span>{fullDate(day)} · {items.length} {items.length === 1 ? "expense" : "expenses"}</span><strong>{money(items.reduce((sum, item) => sum + item.amountPaise, 0))}</strong></h3>
       {items.map(item => {
         const Icon = categoryIcons[item.category] ?? Receipt, yourShare = item.shares.find(share => share.participantId === userId);
         const allowed = organiser || item.createdBy === userId, locked = hasRepayments && !organiser;

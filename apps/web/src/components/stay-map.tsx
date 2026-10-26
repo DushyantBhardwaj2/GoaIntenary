@@ -27,7 +27,7 @@ function mappedStays(stays: StayPinSource[]) {
   });
 }
 
-export function StayMap({ stays }: { stays: StayPinSource[] }) {
+export function StayMap({ stays, compact = false }: { stays: StayPinSource[]; compact?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<Scene | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "failed">("loading");
@@ -104,7 +104,7 @@ export function StayMap({ stays }: { stays: StayPinSource[] }) {
   }, [pins, revision, status]);
 
   const retry = () => setAttempt((value) => value + 1);
-  return <div className={styles.mapBlock}>
+  return <div className={compact ? `${styles.mapBlock} ${styles.compact}` : styles.mapBlock}>
     <div className={styles.mapWrap}>
       <div ref={container} className={styles.mapSurface} role="region" aria-label="Stay map. A pin appears only when that stay has both latitude and longitude. Stays without a pin remain in the list." />
       {status === "loading" && <div className={styles.mapLoading}><Busy text="Opening the stay map…" /></div>}

@@ -133,3 +133,79 @@ Same snapshot as batch 1. Not a votes, comments, bookings, or budget defect. No 
 None. No batch 2 owner is named for a feature failure. The rate-limit ordering above is a recorded finding on budget, not a failed item.
 
 The trip-planning half stays open. Activity status, attendees, and the Today dashboard are still empty stubs.
+
+## Batch 3 — Itinerary additions and Today
+
+Date: 26 October 2026. The verifier did not author this batch. Scope is batch 3 only. No deploy, push, commit, cloud resource, `.env` edit, server restart, feature-code edit, or browser.
+
+**5 pass, 0 fail, 1 not tested.**
+
+No batch 3 feature failure to hand back. The full `npm test` also reproduced the frozen migration snapshot and aborted `checklist.test.ts` inside PGlite. The isolated checklist rerun passed. Neither result is an itinerary or dashboard defect.
+
+**The trip-planning half is not done.** This section does not close it.
+
+### npm test
+
+Command: `npm test` from the repo root. Discovery is recorded in the next section. No browser was started.
+
+| Workspace | Result |
+| --- | --- |
+| `@goa/web` | 15 passed, 0 failed. Duration about 0.6 seconds. |
+| `@goa/core-api` | 101 tests: 98 passed, 3 failed. Duration about 419 seconds. |
+| Root | Exit code 1. There is no `packages` workspace. Web ran, then core failed, and npm stopped. |
+
+The three core failures are the checklist parent below and the two frozen migration results already recorded in batch 1:
+
+- `services/core-api/test/checklist.test.ts` line 21, parent `checklists keep personal items private and let accepted members share tasks`. `Error [RuntimeError]: Aborted()` from `@electric-sql/pglite`. No checklist subtest result was printed.
+- `services/core-api/test/planning.test.ts` line 65, subtest `v1 trip, membership and invitation survive repeatable migration with safe defaults`.
+- Parent suite `premium planner persists private itinerary and spending with additive migration`.
+
+Expected migration versions `[1, 2, 3]`. Observed `[1, 2, 3, 4]`. Every other subtest in `planning.test.ts` passed. `ledger.test.ts` passed in full, including `selected travellers, guests and repayments persist with zero-sum authorised ledger` and its subtests, so that file was not rerun.
+
+`checklist.test.ts` was the file that aborted. It was rerun once from `services/core-api` with `npx tsx --test --test-concurrency=1 test/checklist.test.ts`. That run passed 8 tests and 0 failed, exit code 0, duration about 29 seconds. A pass on that isolated rerun is not a product failure. The file's owner is checklists. No checklist fix is handed back.
+
+`activity-extras.test.ts` passed its parent and all six subtests. `overview.test.ts` passed `accepted members read today, upcoming travel, stays, and contacts`. Travel, stays, contacts, votes, comments, bookings, and budget-limit tests also passed in the full run.
+
+The `updatedAt` assertion still rejects null. In `activity-extras.test.ts`, a confirmed save calls `assert.fail` when `updatedAt` is null, and calls `assert.match` only after that check. `ActivityStatus.updatedAt` is `string | null`. The confirmed-status subtest passed. Typecheck was not re-run.
+
+### npm run test:discovery
+
+Command: `npm run test:discovery` from the repo root. `scripts/discovery.mjs` ran pytest. It did not bind port 4100, and the process on 4100 was not stopped.
+
+51 passed in 2.11 seconds. Exit code 0.
+
+### Acceptance
+
+Pass means the stated code was read or the named test passed in this `npm test`, except the checklist note above. Browser rendering was not exercised.
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| Activity status is planned, confirmed, or cancelled. A missing status reads as planned and does not insert a row. PUT replaces attendees with expense-participant ids. A participant from another trip is rejected. Dev and a removed member are 404. A cancelled activity remains on GET /activities. BookingLinkPicker and ActivityComments are mounted from the plan card in `planner.tsx` via `activity-extras.tsx`. Overlap warnings stay warnings. There is no file-attachment control. | Pass | `activity-extras.test.ts` passed. GET before any write returns `planned` with `updatedAt` null and leaves `goa_core_activity_status` at 0 rows. `booked` is 400 and still inserts nothing. Confirmed save and the following GET return `confirmed`. PUT attendees replaces Meera with Kabir and Meera, then narrows to Kabir, then restores both, and the stored rows are those expense-participant ids. A participant from another trip, a mixed set, a duplicate, and an unknown id are 400 `VALIDATION_ERROR` and leave the stored set unchanged. Dev, a pending member, and a removed member get 404 `That resource is unavailable.` on status and attendees. After status `cancelled`, GET `/activities` still lists Beach morning; a later delete is what removes it. The status check is `planned`, `confirmed`, or `cancelled` in `activity-extra-repository.ts`, migration `004_trip_planning.sql`, and `activityStatusProperties`. `planner.tsx` renders `<ActivityExtras>` inside `article.activity-card`. `activity-extras.tsx` renders `BookingLinkPicker` and `ActivityComments` from that block. Overlap stays a notice: `Notice` says times overlap and the plans stay in the chosen order, and the card shows `Overlapping time`. The web test `days include leap day and both boundaries; overlaps only warn about actual intersecting ranges` passed. `planning-repository.ts` has no overlap rejection. `activity-extras.tsx`, `planner.tsx`, `activity-form.tsx`, `booking-link-picker.tsx`, and `activity-comments.tsx` have no file input. `activity-form.tsx` is still the edit dialog and does not mount status, attendees, comments, or the booking picker. Owner: itinerary. |
+| GET `/v1/trips/:tripId/overview` returns `{ today, upcomingTravel, stays, contacts }`. Today uses Asia/Kolkata. `today` includes activities on that date whose status is not cancelled. `upcomingTravel` is future segments, soonest first, limit 5. `stays` overlap today or check in next, limit 5. `contacts` are the trip's non-deleted cards. A trip with no rows returns empty arrays. Dev and a removed member are 404. `trip-overview.tsx` has no weather widget and no reminder widget. `workspace.tsx` still mounts The plan, Saved places, Budget & splits, and Your people, and also mounts TripOverview, TravelPanel, StaysPanel, BookingsPanel, ContactsPanel, and ChecklistPanel with `?tab=` overview, travel, stays, bookings, contacts, checklist. | Pass | `overview.test.ts` passed. The body keys are `contacts`, `stays`, `today`, and `upcomingTravel`. The same test asserts `weather` and `reminders` are absent. Today is `(now() AT TIME ZONE 'Asia/Kolkata')::date` in `overview-repository.ts`, and the test builds the fixture from that same expression. Morning swim has no status row, appears in `today` as `planned`, and the cancelled beach game is absent from `today` while both remain on GET `/activities`. Upcoming travel returns the future flight and omits the past train; the SQL is `departure_at > now()` ordered by `departure_at ASC`, limit 5. Stays return the overlapping stay, then the later check-in, and omit the stay that already ended; the SQL keeps a Kolkata-day overlap or `check_in > now()`, overlap first, then `check_in`, limit 5. The driver card matches the trip contact list; the SQL keeps `deleted_at IS NULL`. A second trip with no rows returns `{ today: [], upcomingTravel: [], stays: [], contacts: [] }`. Pending, Dev, and a removed member are 404 `That resource is unavailable.` `trip-overview.tsx` renders Today, Upcoming travel, Stays, and Contacts, and has no weather or reminder widget. `workspace.tsx` still has The plan, Saved places, Budget & splits, and Your people, and mounts `TripOverview`, `TravelPanel`, `StaysPanel`, `BookingsPanel`, `ContactsPanel`, and `ChecklistPanel`. `selectTab` writes `?tab=` for overview, travel, stays, bookings, contacts, and checklist. Owner: dashboard. |
+| `overview-repository.ts` and `activity-extra-repository.ts` call `membership(` on every trip read and write. Pending and removed paths are tested. | Pass | Activity extras: `getStatus`, `setStatus`, `getAttendees`, and `setAttendees` each call `membership` before the activity read or the status, attendee, or audit write. Overview: `get` calls `membership` before today, upcoming travel, stays, and contacts. Pending and removed 404s passed in `activity-extras.test.ts` and `overview.test.ts`. |
+| This batch does not add PDF code, S3 or upload routes, an archive/restore trip flow, account-deletion UI, a discovery admin writer, event records, weather, reminder jobs, or a new change-history screen. `places.json` still has 16 place ids. | Pass | Those features are absent from the activity-extra and overview route, repository, and test files, and from `activity-extras.tsx`, `planner.tsx`, `trip-overview.tsx`, `overview.module.css`, and the tab mounts in `workspace.tsx`. `services/discovery/app/main.py` exposes GET `/health`, `/v1/places`, `/v1/places/{place_id}`, and `/v1/search`, and answers other methods with `Discovery is read-only.` `services/discovery/app/data/places.json` has these 16 ids: calangute-beach, baga-beach, candolim-beach, anjuna-beach, vagator-beach, morjim-beach, mandrem-beach, palolem-beach, colva-beach, agonda-beach, basilica-bom-jesus, se-cathedral, st-francis-assisi, viceroys-arch, divar-island, archaeological-museum-old-goa. The existing trip delete control remains in `workspace.tsx`. Existing expense history remains in the expense stylesheet. `window.history.replaceState` in `workspace.tsx` sets the tab URL. |
+| Discovery tests are 51 passing. | Pass | `npm run test:discovery` from the repo root: 51 passed in 2.11 seconds, exit code 0. |
+
+Recorded finding, not a failed item. Owner: itinerary. File: `services/core-api/src/activity-extra-routes.ts`.
+
+Status and attendee PUT await `limit(request)` before `setStatus` or `setAttendees`. That rate-limit write hits `goa_core_rate_limits` before membership. The status insert, attendee replace, and audit insert run only after `membership` inside the repository transaction. Overview has no write and calls `membership` before its reads.
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| Browser use of the Today tab and the new plan card | Not tested | No browser was started. Phone viewport, keyboard, and refresh were not exercised. |
+
+### Frozen test snapshot
+
+Same snapshot as batch 1. Not an itinerary or dashboard defect. No batch 3 owner.
+
+- File: `services/core-api/test/planning.test.ts` line 65.
+- Steps: `npm test` from the repo root. The core workspace applies migration 004 and then runs this file.
+- Expected: `SELECT version FROM goa_core_migrations` returns `[1, 2, 3]`.
+- Observed: `[1, 2, 3, 4]`. The subtest fails, and the parent suite fails with it.
+- `database.ts` sets `latestMigration = 4` and includes `004_trip_planning.sql`. The assertion was left frozen. `planning.test.ts`, `core.test.ts`, and `ledger.test.ts` were not edited.
+
+### Hand-back
+
+None for a batch 3 feature. The checklist PGlite abort is recorded above; the isolated rerun passed, so no checklist fix is handed back.
+
+The trip-planning half is not done.

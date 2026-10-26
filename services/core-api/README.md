@@ -70,6 +70,12 @@ Migration 003 requires the updated API: a v2 binary does not understand guest pa
 
 The new routes are trip PATCH/DELETE, activity GET/POST/PATCH/DELETE plus POST `activities/reorder`, saved-place GET/POST/DELETE, budget GET, and expense POST/PATCH/DELETE under `/v1/trips/:tripId`. Activity/expense creation honors optional UUID `Idempotency-Key` values scoped to actor, trip and resource kind. Actor, creator, role, IDs, display names and sort order are server-owned. Full request/response shapes are in the slice contract.
 
+## Reel and photo ideas
+
+[Slice 08](../../docs/slices/08-reel-ideas.md) adds shared trip inspiration under GET/POST `/v1/trips/:tripId/reel-ideas` and PATCH/DELETE `/v1/trips/:tripId/reel-ideas/:ideaId`. Each idea stores a title, reel/photo kind, optional HTTPS Instagram reference, place, notes and one or more accepted member IDs. All accepted members can read ideas; the creator or organiser can edit/remove them. A removed member cannot access ideas, but their original selected-person reference stays visible to the remaining group until edited.
+
+Migration `005_reel_ideas.sql` adds idea/selected-person tables and extends the existing retry/audit constraints. Existing rows need no backfill. Apply the migration before deploying the new API; the runtime does not migrate cloud databases. A code rollback may leave the additive tables intact. Creates accept a UUID `Idempotency-Key`; PATCH requires the full idea input and current integer `version`, returning 409 for stale writes. Authorised DELETE retries return 204 without duplicating audit history. `test/reel-ideas.test.ts` checks private access, URL safety, invalid people, rollback/retry, concurrent edits, deletion, migration compatibility and fresh-connection persistence. No Instagram requests, embeds, credentials or new cloud resources are introduced. Fastify's [schema validation reference](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/) was checked on 26 October 2026.
+
 ## Security and checks
 
 Private responses use `Cache-Control: no-store`. Outsiders and pending/removed members receive generic 404s, matching unknown trips. Accepted members receive 403 for organiser-only operations. Bodies reject extra properties and type coercion; dates are real calendar dates and paths are UUIDs. The logger emits request ID, method, route template, status, and timing, never raw URLs, headers, tokens, cookies, request bodies, SQL errors, or connection details. Errors return stable codes with safe text.

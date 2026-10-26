@@ -410,3 +410,116 @@ The plan, Saved places, Budget & splits, and Your people were not opened in this
 | The plan, Saved places, Budget & splits, Your people | existing screens | Not opened this pass | Not checked. |
 
 No batch 2 product failure to hand back from the HTTP contracts above. The 390×844 click path was not completed. Local preview left running at `http://127.0.0.1:3000`.
+
+# Batch 3
+
+Date: 26 October 2026. The tester did not author the batch 3 feature code. No deploy, push, commit, cloud resource, `.env` edit, or feature-source edit. `planning.test.ts` was not edited. No code was patched. Uploads, PDF, archiving, and events were not started. `docs/verification/07-trip-planning-half.md` was not edited.
+
+**Flow 9 was clicked on the activity card at 390×844. Flow 10 was clicked on Today. A today-dated activity could not be stored on this trip. The phone layout was checked.**
+
+## Server
+
+At the start of this pass, web `127.0.0.1:3000`, core `127.0.0.1:4000`, and discovery `127.0.0.1:4100` did not answer. That is the allowed restart case. `npm run dev:local` was started once from the repo root. The restart rotates the local session secret, so every later call signed in again. The server was left running.
+
+`GET /api/core/v1/trips/a3678922-b570-4166-ae4b-d0caf29c6490/overview` returned 200, so the running core already had the overview route. There was no second restart.
+
+## Trip
+
+Signed in as Aman. Reused **goa with friends**, `a3678922-b570-4166-ae4b-d0caf29c6490`. Dates `2026-10-31` through `2026-11-05`. Aman is the accepted organiser. Riya is an accepted member. Expense participants: Aman `10000000-0000-4000-8000-000000000001`, Guest One `2b730e19-b491-4365-b5a2-0a5459967f87`, Riya `10000000-0000-4000-8000-000000000002`.
+
+The activity already on the trip was **Comment check**, `e440d9d6-03f3-4498-8f20-7d6b051446bf`, day null. It already had a booking, Coast Desk / `ACT-B2-390`. Asia/Kolkata’s current date, read from the posted comment, is 26 Oct 2026.
+
+## Browser
+
+Browser: cursor-ide-browser. `Emulation.setDeviceMetricsOverride` was sent with width 390, height 844, `deviceScaleFactor` 1, and `mobile` true before the trip click. On the completed auth page, `window.innerWidth` was 390, `window.innerHeight` was 844, and `documentElement.scrollWidth` was 390. The same 390×844 measurement held on the trip, on Today, and on the later tabs. The phone layout was checked. The override was cleared after these checks.
+
+Clicked the synthetic **Aman** button on `http://127.0.0.1:3000/auth`. The button went disabled, then the page landed on `http://127.0.0.1:3000/trips` with avatar A and Sign out. Sign-in stayed loaded.
+
+Clicked the **goa with friends** card. Landed on `/trips/a3678922-b570-4166-ae4b-d0caf29c6490`. The plan opened with no `tab` query.
+
+The tab row is a horizontal scroller. After a later reload, the nav `clientWidth` was 350 and `scrollWidth` was 1029. Measured button positions: The plan x=20, Saved places x=120, Budget & splits x=249, Your people x=390, Today x=511. The visible nav runs from x=20 for 350 pixels, so Your people and Today sit outside that strip until the row is scrolled. Page `scrollWidth` stayed 390.
+
+## Flow 9 — itinerary
+
+Owner: itinerary. Viewport: 390×844. The card was clicked.
+
+Clicked **Unscheduled** (1 idea). The **Comment check** card was on the plan. On that card: status select (Planned, Confirmed, Cancelled), the line “A cancelled plan stays on this day.”, “Who is coming” with Aman, Guest One, and Riya, **Save attendees**, **Activity booking**, and **Comments** (“Newest is last. Each time is India time.”).
+
+Selected **Confirmed** in Status. The select showed Confirmed and was disabled while the page said “Saving status…”. It then enabled with value `confirmed`.
+
+Selected **Cancelled**. The select showed Cancelled while “Saving status…” was up. After the save, the value stayed `cancelled`. The heading **Comment check** was still on Unscheduled, and Unscheduled still said 1 idea. A later return to Unscheduled showed the same card with Status `cancelled`. `GET /api/core/v1/trips/{tripId}/activities` still listed Comment check. `GET` its status returned `cancelled`, `updatedAt` `2026-10-26T08:49:49.448Z`.
+
+Clicked the **Aman** checkbox. It became checked. Clicked **Save attendees**. The button read “Saving attendees…”, then the card read “Coming: Aman”. `GET` attendees returned `participantIds` of only `10000000-0000-4000-8000-000000000001`.
+
+The card already showed provider Coast Desk and reference `ACT-B2-390`, with **Update booking**. Filled the reference with `PLAN-9` and clicked **Update booking**. The button read “Saving…”. The card then showed provider **Coast Desk** and reference **PLAN-9**. `GET` bookings has that activity booking `59be2dbc-4279-4581-81ac-98259dbb2c47`, reference `PLAN-9`, `updatedAt` `2026-10-26T08:50:33.617Z`, and no `file` field. The card form has provider, reference, and notes. It has no file control.
+
+The file rejection was sent over HTTP, because the card cannot send it. `POST /api/core/v1/trips/{tripId}/bookings` with `targetType` `activity`, the Comment check id, `providerName` `Coast Desk`, `reference` `PLAN-9`, and `file` `ticket.pdf`. Expected rejection. Happened: **400** `VALIDATION_ERROR` `Check the supplied information.`
+
+Filled **Add a comment** with `See you at the gate` and clicked **Post comment**. The button read “Posting…”. The thread then showed Aman, “26 Oct 2026, 2:20 pm India Standard Time”, and “See you at the gate”. The time element’s `datetime` was `2026-10-26T08:50:57.666Z`. `GET` the comments returned that body with `createdAt` `2026-10-26T08:50:57.666Z`.
+
+**Pass, clicked.**
+
+A separate `POST` of `{"title":"Today check","day":"2026-10-26"}` is recorded under Flow 10. After that rejection, `POST` `{"title":"Plan card check","day":"2026-10-31"}` with an `Idempotency-Key` returned **201**, id `550e2818-c90b-498a-b924-24da77916d03`. That day is inside the trip. Returning to The plan showed it on Day 01 with the status select, attendee list, Activity booking, and Comments. Those controls were seen. They were not the controls used for the Confirmed, Cancelled, attendee, booking, or comment actions above.
+
+## Flow 10 — dashboard
+
+Owner: dashboard. Viewport: 390×844. The Today tab was clicked.
+
+Clicked **Today**. The tab became pressed. The URL became `?tab=overview`. The click scrolled the tab row. The panel heading was **Today**, kicker “TODAY IN GOA”, and the line “Activities for today’s date in Goa, the next journeys, the stays, and who to call.”
+
+On that first view:
+
+| Group | What was on the page |
+| --- | --- |
+| Today | “There is nothing in Today.” Comment check was absent. |
+| Upcoming travel | BOM to GOI, Flight, departs 18 Dec 2026, 9:30 am |
+| Stays | Calangute House, 18 Dec 2026 2:00 pm to 20 Dec 2026 11:00 am. Panaji Room, 20 Dec 2026 3:00 pm to 22 Dec 2026 10:00 am. |
+| Contacts | Spice farm guide, Airport driver, Calangute front desk, Trip organiser Aman, Scooter rental, with their phones |
+
+The page text had no weather widget and no reminder widget. The groups on screen were Today, Upcoming travel, Stays, and Contacts.
+
+Those two stays are December stays. None covered 26 Oct. Sent `POST /api/core/v1/trips/{tripId}/stays` with `Idempotency-Key`, property `Current stay check`, address Fontainhas, check-in `2026-10-25T14:00:00+05:30`, check-out `2026-10-27T11:00:00+05:30`, phone `0832 222 0001`, contact Host, guest Aman, latitude 15.5, longitude 73.8.
+
+Expected 201.
+
+Happened: **201**. Stay id `912359eb-af85-4fe2-a3b3-8989ee377abd`. Stored check-in `2026-10-25T08:30:00.000Z`, check-out `2026-10-27T05:30:00.000Z`.
+
+Reloaded `?tab=overview`. This reload was not a second click. The Today panel showed the same flight and the same five contacts. Stays listed **Current stay check** first, check-in 25 Oct 2026, 2:00 pm, check-out 27 Oct 2026, 11:00 am, then the two December stays. Today still said “There is nothing in Today.” Comment check was still absent. Weather and reminder were still absent. `GET /api/core/v1/trips/{tripId}/overview` returned 200 with `today` length 0, upcoming travel BOM to GOI, the three stays, and the five contacts.
+
+A today activity was missing. Sent `POST /api/core/v1/trips/{tripId}/activities` with `Idempotency-Key` and `{"title":"Today check","day":"2026-10-26"}`.
+
+Expected an activity on Asia/Kolkata’s current date.
+
+Happened: **400** `VALIDATION_ERROR` `Choose a day within this trip.` The trip runs 31 Oct 2026 through 5 Nov 2026. A cancelled activity on 26 Oct 2026 was not created, so that exclusion was not exercised with a today-dated row. The Today group stayed empty, and the cancelled unscheduled Comment check was not in it.
+
+**Pass for the clicked Today panel, the future flight, the current stay, and a contact.** The today activity was not on the panel. Viewport 390×844. The Today tab was seen; the overview JSON was also read.
+
+## Existing screens
+
+All four were clicked at 390×844. Page `scrollWidth` was 390.
+
+### The plan
+
+Opened with the trip, and opened again after the other tabs. URL has no `tab` query. Tab pressed. Saw **goa with friends**, 31 Oct 2026 — 5 Nov 2026, the day strip, Add a plan, and the map with Leaflet and OpenStreetMap attribution. After the writes, Day 01 said 1 plan and showed **Plan card check** with status, attendees, Activity booking, and Comments. Unscheduled said 1 idea and still showed **Comment check**.
+
+### Saved places
+
+Clicked **Saved places**. URL `?tab=saved`. Tab pressed. Saw “Keep the good ideas.”, “Find a place”, the day selector on “Day 1 · Sat, 31 Oct”, and “Follow a little curiosity.”
+
+### Budget & splits
+
+Clicked **Budget & splits**. URL `?tab=budget`. Tab pressed. Saw “Trip expenses”, balance ₹0, group spending ₹100 and 1 expense, the Chai bill, and group balances for Aman, Guest One, and Riya, each ₹0 settled.
+
+### Your people
+
+Clicked **Your people**. The tab row scrolled. URL `?tab=people`. Tab pressed. Saw “Your little circle” count 2, Aman (you) as Trip organiser, Riya as Trip member with Remove, “Create invite link”, and Invitation 1, “Expires 28 Oct · approval required”, Active, Revoke.
+
+## Result
+
+| Flow | Owner | Result | Viewport |
+| --- | --- | --- | --- |
+| 9 Itinerary | itinerary | Pass, clicked. Status confirmed then cancelled, Aman saved as attendee, booking updated to Coast Desk / PLAN-9, comment posted with `createdAt`. Cancelled Comment check stayed on Unscheduled. File body rejected over HTTP, 400. | 390×844 |
+| 10 Dashboard | dashboard | Pass for the clicked Today panel. Future flight, current stay, and contacts were on the page. No weather widget and no reminder widget. A 26 Oct activity was rejected with “Choose a day within this trip.” Today stayed empty. | 390×844 |
+| The plan, Saved places, Budget & splits, Your people | existing screens | Rendered | 390×844 |
+
+No batch 3 product failure to hand back. Local preview left running at `http://127.0.0.1:3000`.

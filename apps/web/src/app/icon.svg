@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Goa itinerary">
+  <title>Goa itinerary</title>
+  <defs><clipPath id="goa-mark"><rect width="32" height="32" rx="7.5"/></clipPath></defs><g clip-path="url(#goa-mark)">
+    <rect width="32" height="32" fill="#173F35"/>
+    <path d="M0 23.5C5.2 20.7 10.6 20.7 16 23.5C21.4 26.3 26.8 26.3 32 23.5V32H0Z" fill="#2C6B58"/>
+    <path d="M0 23.5C5.2 20.7 10.6 20.7 16 23.5C21.4 26.3 26.8 26.3 32 23.5" fill="none" stroke="#E8D9B4" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M6.5 17.1C10.1 13.2 13.1 13.5 16 15.5C18.9 17.5 21.9 17.6 25.2 15.4" fill="none" stroke="#F7F4EB" stroke-width="1.56" stroke-linecap="round"/>
+    <circle cx="6.5" cy="17.1" r="2.05" fill="#F7F4EB"/>
+    <circle cx="16" cy="15.5" r="2.45" fill="#F7F4EB"/>
+    <circle cx="16" cy="15.5" r="1.08" fill="#DE6C4E"/>
+    <circle cx="25.2" cy="15.4" r="2.05" fill="#F7F4EB"/>
+    <circle cx="23.5" cy="7.3" r="4.05" fill="#DE6C4E"/>
+    <circle cx="22.15" cy="6.15" r="1.35" fill="#F4C4B4"/>
+  </g>
+</svg>

@@ -186,7 +186,7 @@
   .searchForm .searchInput input::placeholder { font-size: 13px; }
   .results button { gap: 8px; padding: 12px 10px; }
   .results button > span:last-child { display: none; }
-  .surface { height: 320px; }
+  .surface { height: 220px; }
   .selection { padding: 16px; }
   .selection > div:last-child { width: 100%; }
   .selection > div:last-child button { flex: 1; }

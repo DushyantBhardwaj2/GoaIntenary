@@ -22,9 +22,15 @@ function packedLabel(value: string): string {
   return packedFormat.format(date);
 }
 
-function assigneeName(item: ChecklistItem, members: Member[]): string | null {
-  if (!item.assigneeUserId) return null;
-  return members.find((member) => member.userId === item.assigneeUserId)?.displayName ?? null;
+function initials(name: string): string {
+  const letters = name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
+  return letters || "?";
+}
+
+function personLabel(userId: string, members: Member[], selfId: string): { name: string; letters: string } {
+  const member = members.find((item) => item.userId === userId);
+  const name = member?.displayName ?? "A traveller";
+  return { name: userId === selfId ? "you" : name, letters: initials(member?.displayName ?? name) };
 }
 
 function rights(item: ChecklistItem, userId: string, organiser: boolean) {
@@ -102,7 +108,7 @@ function ItemForm({ tripId, item, accepted, onClose, onSaved }: {
     void save();
   };
 
-  return <Dialog title={item ? "Edit this item" : "Add a packing item"} onClose={onClose} busy={busy}>
+  return <Dialog title={item ? "Edit this item" : "Add a to-do"} onClose={onClose} busy={busy}>
     <form className={`premium-form ${styles.form}`} onSubmit={submit} autoComplete="off">
       <p className="helper-text">
         {item
@@ -155,6 +161,7 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
   const [toggleError, setToggleError] = useState("");
   const [actionError, setActionError] = useState("");
   const [draft, setDraft] = useState<{ item?: ChecklistItem } | null>(null);
+  const [filter, setFilter] = useState<"all" | "open" | "done">("all");
   const [removing, setRemoving] = useState<ChecklistItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -172,6 +179,7 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
     setActionError("");
     setDraft(null);
     setRemoving(null);
+    setFilter("all");
     setLoading(true);
   }
 
@@ -203,8 +211,12 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
   const accepted = members.filter((member) => member.status === "accepted")
     .slice()
     .sort((left, right) => left.displayName.localeCompare(right.displayName) || left.userId.localeCompare(right.userId));
-  const personal = (items ?? []).filter((item) => item.visibility === "personal");
-  const shared = (items ?? []).filter((item) => item.visibility === "shared");
+  const allItems = items ?? [];
+  const matches = (item: ChecklistItem) => filter === "all" || (filter === "done" ? Boolean(item.completedAt) : !item.completedAt);
+  const personal = allItems.filter((item) => item.visibility === "personal" && matches(item));
+  const shared = allItems.filter((item) => item.visibility === "shared" && matches(item));
+  const doneCount = allItems.filter((item) => item.completedAt).length;
+  const progress = allItems.length === 0 ? 0 : Math.floor((doneCount * 100) / allItems.length);
 
   const toggle = async (item: ChecklistItem) => {
     setBusyId(item.id);
@@ -245,7 +257,8 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
   const renderItem = (item: ChecklistItem) => {
     const done = Boolean(item.completedAt);
     const ability = rights(item, userId, organiser);
-    const name = assigneeName(item, members);
+    const creator = personLabel(item.createdBy, members, userId);
+    const assignee = item.assigneeUserId ? personLabel(item.assigneeUserId, members, userId) : null;
     const itemBusy = busyId === item.id;
     return <li key={item.id}>
       <article className={styles.item} data-visibility={item.visibility} data-done={done ? "true" : "false"} aria-busy={itemBusy}>
@@ -259,7 +272,8 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
           <h4 className={styles.itemTitle}>{item.title}</h4>
           <p className={styles.state}>{done ? "Packed" : "Still to pack"}</p>
         </div>}
-        {item.visibility === "shared" && <p className={styles.meta}>{name ? `For ${name}` : item.assigneeUserId ? "Assignee name unavailable" : "No assignee yet"}</p>}
+        <p className={styles.who}><span>Created by</span><span className={styles.mini}>{creator.letters}</span><span>{creator.name}</span></p>
+        {item.visibility === "shared" && <p className={styles.who}><span>Assigned to</span>{assignee ? <><span className={styles.mini}>{assignee.letters}</span><span>{assignee.name}</span></> : <span>No one yet</span>}</p>}
         {item.completedAt && <p className={styles.when}>Packed <time dateTime={item.completedAt}>{packedLabel(item.completedAt)}</time></p>}
         {(ability.edit || ability.remove) && <div className={styles.actions}>
           {ability.edit && <button className="button secondary" type="button" aria-label={`Edit ${item.title}`} disabled={itemBusy} onClick={() => { setRemoving(null); setDraft({ item }); }}>Edit</button>}
@@ -269,17 +283,31 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
     </li>;
   };
 
-  return <section className={styles.panel} aria-label="Packing and tasks" aria-busy={loading}>
+  return <section className={styles.panel} aria-label="Notes and to-dos" aria-busy={loading}>
     <header className={styles.header}>
       <div className={styles.heading}>
-        <span className={styles.kicker}><ListChecks size={15} aria-hidden="true" /> PACKING AND TASKS</span>
-        <h2>Packing and tasks</h2>
-        <p>Personal items stay on your list. Shared items are visible to everyone who has joined.</p>
+        <span className={styles.kicker}><ListChecks size={15} aria-hidden="true" /> NOTES AND TO-DOS</span>
+        <h2>Notes & to-dos</h2>
+        <p>The little things that keep the trip moving. Personal items stay on your list. Shared items are visible to everyone who has joined.</p>
       </div>
-      <button className="button primary" type="button" disabled={items === null} onClick={() => { setRemoving(null); setDraft({}); }}>
-        <Plus size={17} aria-hidden="true" />Add an item
+      <button className="button coral" type="button" disabled={items === null} onClick={() => { setRemoving(null); setDraft({}); }}>
+        <Plus size={17} aria-hidden="true" />Add a to-do
       </button>
     </header>
+    {items && items.length > 0 && <div className={styles.progressRow}>
+      <div className={styles.filters} role="group" aria-label="Filter the list">
+        {([["all", "All", allItems.length], ["open", "Open", allItems.length - doneCount], ["done", "Done", doneCount]] as const).map(([id, label, count]) => (
+          <button key={id} type="button" className={styles.chip} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label} <span>{count}</span></button>
+        ))}
+      </div>
+      <div className={styles.progress}>
+        <p>{doneCount} of {allItems.length} done</p>
+        <div className={styles.track} role="progressbar" aria-valuemin={0} aria-valuemax={allItems.length} aria-valuenow={doneCount} aria-label="To-dos completed">
+          <span style={{ width: `${progress}%` }} />
+        </div>
+        <p>{progress}%</p>
+      </div>
+    </div>}
     {loadError && <Notice>{loadError} <button type="button" className="text-button" onClick={() => void load()}>Retry</button></Notice>}
     {toggleError && <Notice>{toggleError} <button type="button" className="text-button" onClick={() => void retryRef.current?.()}>Retry</button></Notice>}
     {loading && items === null ? <div className={styles.loading}><Busy text="Checking the list…" /></div> : null}
@@ -291,7 +319,7 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
           {personal.length > 0 && <p className={styles.tally}>{personal.filter((item) => !item.completedAt).length} still open</p>}
         </div>
         <p className="helper-text">Only you can see these, including from the organiser.</p>
-        {personal.length === 0 ? <p className={styles.none}>No personal items yet</p> : <ul className={styles.items}>{personal.map(renderItem)}</ul>}
+        {personal.length === 0 ? <p className={styles.none}>{filter === "all" ? "No personal items yet" : "None in this view"}</p> : <ul className={styles.items}>{personal.map(renderItem)}</ul>}
       </section>
       <section className={styles.group} data-visibility="shared" aria-labelledby={sharedId}>
         <div className={styles.groupHead}>
@@ -299,8 +327,9 @@ export function ChecklistPanel({ tripId }: { tripId: string }) {
           {shared.length > 0 && <p className={styles.tally}>{shared.filter((item) => !item.completedAt).length} still open</p>}
         </div>
         <p className="helper-text">Everyone who has joined can see these. The assignee or the organiser can mark one done.</p>
-        {shared.length === 0 ? <p className={styles.none}>No shared items yet</p> : <ul className={styles.items}>{shared.map(renderItem)}</ul>}
+        {shared.length === 0 ? <p className={styles.none}>{filter === "all" ? "No shared items yet" : "None in this view"}</p> : <ul className={styles.items}>{shared.map(renderItem)}</ul>}
       </section>
+      <aside className={styles.memory} aria-hidden="true"><p>Small steps.<br />Bigger memories.</p></aside>
     </div>}
     {draft && <ItemForm key={draft.item?.id ?? "create"} tripId={tripId} item={draft.item} accepted={accepted} onClose={() => setDraft(null)} onSaved={load} />}
     {removing && <Dialog title="Remove this item?" onClose={() => { if (!busy) setRemoving(null); }} busy={busy}>

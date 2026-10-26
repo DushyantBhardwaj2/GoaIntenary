@@ -50,10 +50,91 @@ def clean_text(value, maximum):
     return " ".join("".join(char for char in value if ord(char) >= 32 and ord(char) != 127).split())[:maximum]
 
 
+# Display labels only. A named place inside Goa is kept even when the geocoder's
+# own type is "other" — that is how Photon classifies Palolem Beach.
+_CATEGORY_BY_VALUE = {
+    "beach": "beach",
+    "cafe": "cafe",
+    "restaurant": "food",
+    "fast_food": "food",
+    "food_court": "food",
+    "bar": "nightlife",
+    "pub": "nightlife",
+    "nightclub": "nightlife",
+    "biergarten": "nightlife",
+    "museum": "culture",
+    "attraction": "culture",
+    "viewpoint": "culture",
+    "gallery": "culture",
+    "artwork": "culture",
+    "fort": "culture",
+    "castle": "culture",
+    "ruins": "culture",
+    "monument": "culture",
+    "memorial": "culture",
+    "archaeological_site": "culture",
+    "marketplace": "shopping",
+    "mall": "shopping",
+    "bus_station": "transport",
+    "station": "transport",
+    "halt": "transport",
+    "stop": "transport",
+    "ferry_terminal": "transport",
+    "aerodrome": "transport",
+}
+
+
+def display_category(key, value) -> str:
+    kind = str(value or "")
+    group = str(key or "")
+    if kind in _CATEGORY_BY_VALUE:
+        return _CATEGORY_BY_VALUE[kind]
+    if group == "shop":
+        return "shopping"
+    if group in {"railway", "aeroway", "public_transport"} or (group == "landuse" and kind == "railway"):
+        return "transport"
+    if group == "historic":
+        return "culture"
+    if group == "place" and kind in {"city", "town", "village", "suburb", "neighbourhood", "hamlet", "locality"}:
+        return "other"
+    return "other"
+
+
+def useful_place(key, value) -> bool:
+    """Named beaches, forts, stations, markets, restaurants, viewpoints and towns stay.
+    Streets, boundaries and the state itself are too broad to plan around."""
+    group = str(key or "")
+    kind = str(value or "")
+    if group in {"highway", "junction", "route", "waterway"}:
+        return False
+    if group == "boundary":
+        return False
+    if group == "place" and kind in {"state", "country", "region", "county", "continent"}:
+        return False
+    if group == "landuse" and kind != "railway":
+        return False
+    if group == "amenity" and kind in {"parking", "parking_space", "parking_entrance", "police", "bank", "atm", "toilets", "bench", "waste_basket"}:
+        return False
+    return True
+
+
+class SearchHits(list):
+    skipped_broad: int = 0
+
+
+def inside_goa(latitude: float, longitude: float, properties: dict) -> bool:
+    if not (14.8 <= latitude <= 15.9 and 73.6 <= longitude <= 74.4):
+        return False
+    country = str(properties.get("countrycode", "")).casefold()
+    state = str(properties.get("state", "")).casefold()
+    # The search box is biased to Goa, but the rectangle still clips Maharashtra and Karnataka.
+    return (not country or country == "in") and "goa" in state
+
+
 def normalise_features(payload: dict, fetched_at: str) -> list[SearchPlace]:
     if not isinstance(payload, dict) or not isinstance(payload.get("features"), list):
         raise SearchUnavailable()
-    places, seen = [], set()
+    places, seen, skipped = [], set(), 0
     for feature in payload["features"][:20]:
         try:
             properties, geometry = feature["properties"], feature["geometry"]
@@ -63,10 +144,7 @@ def normalise_features(payload: dict, fetched_at: str) -> list[SearchPlace]:
             if isinstance(latitude, bool) or isinstance(longitude, bool):
                 continue
             latitude, longitude = float(latitude), float(longitude)
-            if not math.isfinite(latitude) or not math.isfinite(longitude) or not (14.8 <= latitude <= 15.9 and 73.6 <= longitude <= 74.4):
-                continue
-            # A bounding rectangle alone includes neighbouring states.
-            if str(properties.get("state", "")).casefold() != "goa" or str(properties.get("countrycode", "")).casefold() != "in":
+            if not math.isfinite(latitude) or not math.isfinite(longitude) or not inside_goa(latitude, longitude, properties):
                 continue
             osm_type = {"N": "node", "W": "way", "R": "relation"}.get(properties.get("osm_type"))
             osm_id = properties.get("osm_id")
@@ -76,15 +154,20 @@ def normalise_features(payload: dict, fetched_at: str) -> list[SearchPlace]:
             identity = f"osm-{osm_type}-{osm_id}"
             if identity in seen:
                 continue
+            # properties["type"] is Photon's coarse class. Beaches arrive as "other"; do not reject on it.
+            if not useful_place(properties.get("osm_key"), properties.get("osm_value")):
+                skipped += 1
+                continue
             seen.add(identity)
-            key, value = properties.get("osm_key"), properties.get("osm_value")
-            category = {"beach": "beach", "cafe": "cafe", "restaurant": "food", "fast_food": "food", "bar": "nightlife", "pub": "nightlife", "nightclub": "nightlife", "museum": "culture", "attraction": "culture", "viewpoint": "culture", "bus_station": "transport"}.get(value, "shopping" if key == "shop" else "other")
+            category = display_category(properties.get("osm_key"), properties.get("osm_value"))
             area = clean_text(properties.get("city") or properties.get("district") or properties.get("county") or properties.get("state"), 80) or "Goa"
             region = "south" if latitude < 15.3 else "north" if latitude > 15.5 else "central"
             places.append(SearchPlace(id=identity, title=title, description=f"OpenStreetMap place data in {area}. Check the source and local conditions before visiting.", category=category, region=region, area=area, latitude=latitude, longitude=longitude, sourceUrl=f"https://www.openstreetmap.org/{osm_type}/{osm_id}", checkedAt=fetched_at, origin="openstreetmap"))
         except (KeyError, TypeError, ValueError, AttributeError):
             continue
-    return places[:8]
+    hits = SearchHits(places[:8])
+    hits.skipped_broad = skipped
+    return hits
 
 
 class PhotonSearch:
@@ -105,9 +188,10 @@ class PhotonSearch:
                 return cached[1]
             if now < self._unavailable_until:
                 raise SearchUnavailable()
-            configured = os.environ.get("PHOTON_API_URL")
-            deployed = os.environ.get("NODE_ENV") == "production" or bool(os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
-            endpoint = configured or ("" if deployed else "https://photon.komoot.io/api/")
+            # A private Photon-compatible endpoint can be configured. Without one, the public
+            # demo is used, including on Lambda, so named Goa places still resolve. The same
+            # timeout, cache and one-query-per-second limit apply.
+            endpoint = (os.environ.get("PHOTON_API_URL") or "").strip() or "https://photon.komoot.io/api/"
             parsed = urlsplit(endpoint)
             if not endpoint or parsed.username or parsed.password or parsed.query or parsed.fragment or not parsed.hostname or (parsed.scheme != "https" and not (parsed.scheme == "http" and parsed.hostname in {"localhost", "127.0.0.1"})):
                 raise SearchUnavailable()
@@ -140,20 +224,35 @@ class PhotonSearch:
 photon = PhotonSearch()
 
 
+def _selected(places: list[SearchPlace], category: str | None, region: str | None) -> list[SearchPlace]:
+    selected = []
+    for place in places:
+        if category and place.category != category:
+            continue
+        if region and region != "all" and place.region != region:
+            continue
+        selected.append(place)
+    return selected
+
+
 def search_all(query: str, category: str | None, region: str | None) -> SearchResults:
     normalized = normalize_query(query)
-    reviewed = [SearchPlace(**place.model_dump(), origin="reviewed") for place in search_places(normalized, category, region)]
     available = True
     try:
         remote = photon.search(normalized)
     except SearchUnavailable:
         available, remote = False, []
-    merged = list(reviewed)
-    for place in remote:
-        if category and place.category != category or region and region != "all" and place.region != region:
-            continue
-        # Prefer reviewed records when both sources identify the same nearby place.
-        if any(existing.title.casefold() == place.title.casefold() and abs(existing.latitude-place.latitude) < 0.01 and abs(existing.longitude-place.longitude) < 0.01 for existing in merged):
-            continue
-        merged.append(place)
-    return SearchResults(places=merged[:12], total=len(merged[:12]), providerAvailable=available, providerNotice=("OpenStreetMap place results; retrieved time is not a business verification date. Planning regions are approximate." if available else "Wider map search is temporarily unavailable. Only matching reviewed places are shown; retry to search more places."))
+    # A typed query uses the live geocoder. The reviewed catalogue is only a fallback when that service fails.
+    if available:
+        places = _selected(remote, category, region)
+        skipped = int(getattr(remote, "skipped_broad", 0) or 0)
+        if not remote and skipped:
+            notice = "That search only matched streets or a very broad area. Try a specific beach, fort, station, market, restaurant, viewpoint, or town."
+        else:
+            notice = "Live OpenStreetMap places inside Goa. The pin is a map match, not a checked listing, and saving it does not book anything."
+    else:
+        reviewed = [SearchPlace(**place.model_dump(), origin="reviewed") for place in search_places(normalized, None, None)]
+        places = _selected(reviewed, category, region)
+        notice = "Wider map search is temporarily unavailable. Only matching reviewed places are shown; retry to search more places."
+    shown = places[:12]
+    return SearchResults(places=shown, total=len(shown), providerAvailable=available, providerNotice=notice)

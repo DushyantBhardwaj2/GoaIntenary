@@ -19,3 +19,4 @@ __pycache__/
 infra/artifacts/
 infra/deployment-outputs*.json
 infra/config/*.local.json
+.cursor/

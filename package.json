@@ -16,6 +16,7 @@
     "verify:planner": "node scripts/verify-planner.mjs",
     "verify:splits": "node scripts/verify-splits.mjs",
     "verify:map-search": "node scripts/verify-map-search.mjs",
+    "verify:reel-ideas": "node scripts/verify-reel-ideas.mjs",
     "aws:login": "node infra/scripts/aws.mjs login",
     "aws:doctor": "node infra/scripts/aws.mjs doctor",
     "dev:aws": "node infra/scripts/web.mjs"

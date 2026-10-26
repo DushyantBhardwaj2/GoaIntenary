@@ -29,18 +29,30 @@ def test_normalization_keeps_goa_sources_and_rejects_foreign_invalid_and_duplica
         normalise_features({"error": "not GeoJSON"}, NOW)
 
 
-def test_alias_merging_prefers_reviewed_place_and_filters_real_results(monkeypatch):
+def test_typed_search_returns_live_goa_places_and_keeps_broad_geocoder_types(monkeypatch):
     assert normalize_query("  PALOM   BEACH ") == "palolem beach"
-    remote = normalise_features({"features": [feature(), feature("Canacona cafe", 8, osm_key="amenity", osm_value="cafe")]}, NOW)
+    rows = [
+        feature(type="other"),
+        feature("Canacona cafe", 8, osm_key="amenity", osm_value="cafe"),
+        feature("Fort Aguada", 12, latitude=15.492, longitude=73.774, osm_key="historic", osm_value="fort", type="other"),
+        feature("Madgaon Railway Station", 13, latitude=15.27, longitude=73.97, osm_key="railway", osm_value="station", type="other"),
+        feature("Mapusa", 14, latitude=15.59, longitude=73.81, osm_key="place", osm_value="town", type="city"),
+        feature("Fort Aguada Road", 16, latitude=15.49, longitude=73.77, osm_key="highway", osm_value="secondary", type="street"),
+        feature("Belgaum Market", 15, latitude=15.85, longitude=74.2, state="Karnataka", osm_key="amenity", osm_value="marketplace"),
+    ]
+    remote = normalise_features({"features": rows}, NOW)
+    assert [place.title for place in remote] == ["Palolem Beach", "Canacona cafe", "Fort Aguada", "Madgaon Railway Station", "Mapusa"]
+    assert [place.category for place in remote] == ["beach", "cafe", "culture", "transport", "other"]
     queries = []
     monkeypatch.setattr(place_search.photon, "search", lambda q: queries.append(q) or remote)
     result = search_all("Palom Beach", None, None)
     assert queries == ["palolem beach"]
-    assert [place.origin for place in result.places] == ["reviewed", "openstreetmap"]
-    assert result.places[0].id == "palolem-beach"
+    assert [place.origin for place in result.places] == ["openstreetmap"] * 5
+    assert result.places[0].id == "osm-way-123"
+    assert result.places[0].title == "Palolem Beach"
     assert result.providerAvailable
-    assert len(search_all("Palom Beach", "beach", "south").places) == 1
-    assert search_all("Palom Beach", None, "north").places == []
+    assert [place.title for place in search_all("Palom Beach", "beach", "south").places] == ["Palolem Beach"]
+    assert [place.title for place in search_all("Palom Beach", None, "north").places] == ["Mapusa"]
 
 
 def test_provider_failure_is_explicit_and_reviewed_results_are_not_fabricated(monkeypatch):
@@ -98,11 +110,40 @@ def test_invalid_provider_configuration_fails_closed(monkeypatch, endpoint):
         PhotonSearch().search("palolem")
 
 
-def test_demo_is_not_silently_used_in_production(monkeypatch):
+def test_public_photon_resolves_named_places_without_a_private_endpoint(monkeypatch):
+    calls = []
+    payload = json.dumps({"features": [feature()]}).encode()
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Type": "application/json"}
+
+    class Opener:
+        def open(self, request, timeout):
+            calls.append((request.full_url, timeout))
+            return Response(payload)
+
     monkeypatch.delenv("PHOTON_API_URL", raising=False)
     monkeypatch.setenv("NODE_ENV", "production")
-    with pytest.raises(SearchUnavailable):
-        PhotonSearch().search("palolem")
+    monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "goa-dev-discovery")
+    monkeypatch.setattr(place_search, "build_opener", lambda *_args: Opener())
+    monkeypatch.setattr(place_search.time, "sleep", lambda _duration: None)
+    places = PhotonSearch().search("palolem beach")
+    assert places[0].title == "Palolem Beach"
+    assert places[0].category == "beach"
+    assert calls[0][0].startswith("https://photon.komoot.io/api/?")
+    assert calls[0][1] == 5
+
+
+def test_only_streets_are_called_too_broad(monkeypatch):
+    remote = normalise_features({"features": [feature("Fort Aguada Road", 16, osm_key="highway", osm_value="secondary", type="street")]}, NOW)
+    assert remote == []
+    assert remote.skipped_broad == 1
+    monkeypatch.setattr(place_search.photon, "search", lambda _query: remote)
+    result = search_all("Fort Aguada Road", None, None)
+    assert result.places == []
+    assert result.providerAvailable
+    assert "very broad area" in result.providerNotice
 
 
 @pytest.mark.parametrize("body,content_type,status", [(b"{invalid", "application/json", 200), (b"x" * 131073, "application/json", 200), (b"<html>Failure</html>", "text/html", 200), (b"{}", "application/json", 429)], ids=["invalid-json", "oversized", "html", "throttled"])

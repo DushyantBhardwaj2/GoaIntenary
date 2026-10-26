@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ApiError, api, core } from "@/lib/client";
 import type { Booking, BookingInput, BookingTargetType } from "@/lib/trip-planning-types";
+import { PlanSection } from "./plan-section";
 import { Busy, Notice } from "./ui";
 import styles from "./bookings.module.css";
 
@@ -112,11 +113,15 @@ export function BookingLinkPicker({ tripId, targetType, targetId }: { tripId: st
     void save();
   };
 
-  return <section className={styles.picker} aria-label={`${kindLabel[targetType]} booking`} aria-busy={loading || busy}>
-    <div>
-      <h3>{kindLabel[targetType]} booking</h3>
-      <p className={styles.hint} id={helpId}>Provider and reference for this plan. Saving here does not purchase anything.</p>
-    </div>
+  const summary = loadError
+    ? "The booking could not be loaded."
+    : booking
+      ? `${booking.providerName || "Provider not recorded"}${booking.reference ? ` · ${booking.reference}` : ""}`
+      : "No booking is linked yet. Saving does not purchase anything.";
+
+  return <PlanSection title={`${kindLabel[targetType]} booking`} summary={summary} expand={Boolean(loadError)}>
+    <section className={styles.picker} aria-label={`${kindLabel[targetType]} booking`} aria-busy={loading || busy}>
+    <p className={styles.hint} id={helpId}>Provider and reference for this plan. Saving here does not purchase anything.</p>
     {loadError && <Notice>{loadError} <button type="button" className="text-button" onClick={() => void load()}>Retry</button></Notice>}
     {loading && booking === undefined ? <div className={styles.loading}><Busy text="Looking up the booking…" /></div> : null}
     {booking !== undefined && <>
@@ -147,5 +152,6 @@ export function BookingLinkPicker({ tripId, targetType, targetId }: { tripId: st
         </div>
       </form>
     </>}
-  </section>;
+    </section>
+  </PlanSection>;
 }

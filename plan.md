@@ -7,6 +7,8 @@
 
 **Website deployment update (26 October 2026):** The repository is on GitHub and the `apps/web` Next.js app is live in Dushyant's Vercel Hobby workspace at [goa-intenary.vercel.app](https://goa-intenary.vercel.app/). GitHub Actions passed on commit `7ca2841`, including the migration-history test corrected for migration 004. Vercel has Cognito and AWS API settings, `ENABLE_LOCAL_DEMO=false`, and the exact production `APP_ORIGIN`; the latest production redeployment is Ready. In a live browser, the landing page loaded, Explore received all 16 reviewed places and map pins from the discovery API, and My trips required sign-in. This is a public showcase with invite-only account access: public Cognito signup remains disabled. A full private trip/browser journey, mobile/GPU/keyboard acceptance, backup restore and broader production release gates remain open. See [deployment verification](docs/verification/2026-10-26-vercel-deployment.md).
 
+**Place search (26 October 2026):** Named Goa places come from the reviewed catalogue and from Photon/OpenStreetMap. When `PHOTON_API_URL` is unset, discovery uses the public Photon demo, including on Lambda, with the existing timeout, cache and one-new-query-per-second limit. Streets, boundaries and the state itself are left out. A search that only matches those says it is too broad and asks for a beach, fort, station, market, restaurant, viewpoint or town. Palolem Beach is kept even when Photon labels its type `other`. The live site still shows “That resource is unavailable” on Today, Checklist, Bookings and plan detail until the core API that is actually running is the build that registers those routes; the routes themselves are in this repository and answer locally.
+
 **Slice 03 update:** the owner requested the missing map and bills split between selected travellers, including named guests. Local implementation now includes matching Explore/day Leaflet pins, optional custom coordinates, selected-person equal/custom shares, guest records without access rights, exact balances, advisory settle-up and manual repayment records. Existing expenses remain unallocated until explicitly split. See [contract](docs/slices/03-map-and-splits.md) and [handoff](docs/slices/03-handoff.md). Automated/API checks are recorded there; browser map/mobile verification and cloud gates remain open.
 
 **Slice 04 update:** map panels now contain debounced source-labelled place search, selectable results, dynamic pin focus and direct itinerary/saved-place actions. Public search combines the reviewed catalogue with bounded Goa Photon/OpenStreetMap results; Palom resolves to Palolem. Private planning reuses the current trip/day and existing authorised activity writes. The final web (15), Python (51), production build and six-group live API checks pass; rendered browser verification remains open. See [handoff](docs/slices/04-handoff.md).
@@ -19,7 +21,11 @@
 
 **Trip-planning batch 2 (21 October 2026):** Accepted members can mark one Interested vote on a saved place, comment on an activity, and link one booking to an activity, a stay, or a travel segment. The organiser can set a category spending cap. Paid remaining stays the trip budget minus recorded spending. Forecast remaining is the budget minus itinerary estimates. Votes are on Saved places, and the cap controls are in Budget & splits. Comment threads and booking pickers are not on the plan yet. Those four flows passed through the local API. The phone layout was not checked for this batch: the sign-in page did not stay loaded, and a 390×844 override still laid out at 980 pixels. Web tests stayed at 15 passed. Core tests pass except the frozen `planning.test.ts` migration list. See [batch 2 verification](docs/verification/07-trip-planning-half.md) and [browser notes](docs/verification/07-trip-planning-half-browser.md). No product fix was required. Cloud acceptance stays a separate gate.
 
+**Trip-planning batch 3 (26 October 2026):** Each plan card can set a status, choose attendees, save a booking link, and show a comment thread. A cancelled activity stays on the plan. The Today tab lists today's non-cancelled activities, upcoming travel, stays, and contacts, with no weather and no reminders. Those controls were clicked at 390×844 on the local app. The reused trip runs 31 Oct–5 Nov, so an activity for 26 Oct was rejected and Today had no activity for that date. The future flight, the current stay, and the contacts were on Today. Web tests stayed at 15 passed. Discovery stayed at 51 passed, with 16 catalogue places. Core tests pass except the frozen `planning.test.ts` migration list, which still expects versions `[1, 2, 3]` after migration 004. A checklist suite once aborted inside the local database and passed when run alone. See [batch 3 verification](docs/verification/07-trip-planning-half.md) and [browser notes](docs/verification/07-trip-planning-half-browser.md). No product fix was required. Cloud acceptance stays a separate gate.
+
 ## 1. Product goal
+
+**Reel ideas update (26 October 2026):** The owner requested a dedicated **Reel** trip section for shared reel and photo inspiration. Accepted members can save an optional Instagram reference, title, selected trip members, place and shot notes, then reopen ideas later. The creator or organiser can edit or remove them. Core API/PostgreSQL owns this data; no Instagram account integration or new infrastructure is needed. See [Slice 08 contract](docs/slices/08-reel-ideas.md) for input, access, migration and acceptance rules. Verification and deployment status are recorded in that slice.
 
 Build a mobile-first website that lets a private group explore Goa, manually plan each day from a map, keep bookings and trip documents in one place, and settle shared expenses. The first usable release should work for a real invited group without requiring a mobile app, social login, automatic itinerary generation, or in-app money transfers.
 
@@ -148,6 +154,12 @@ Provide email/password registration, verification, login/logout, forgot password
 
 Define retention: users can remove their personal uploads; an archived trip remains visible to members for a defined period; deletion and financial-record handling require a written policy before launch. Do not launch the ID vault until private/shared permissions and file access tests pass.
 
+### 4.10 Reel and photo ideas
+
+Each private trip has a **Reel** section for Reel or Photo ideas. An accepted member adds a title, an optional HTTPS Instagram URL, one or more accepted members who want to take part, and optional place and shot notes. Saved ideas remain visible to accepted trip members after refresh and can be reopened at the destination. A creator or organiser can edit or delete an idea. Member selections express participation only; they do not schedule activities. No Instagram credentials, media upload or automatic content fetching is required.
+
+**Acceptance:** Aman saves a Palolem sunset reel with an Instagram reference, selects Aman and Riya and adds a shot note. Riya sees the same idea after refresh and can open the reference. Photo ideas can be saved without a URL. Outsiders, pending members and removed members cannot access ideas; selecting someone from another trip is rejected.
+
 ## 5. Screen map
 
 | Screen | Key content and actions |
@@ -160,6 +172,7 @@ Define retention: users can remove their personal uploads; an archived trip rema
 | Expenses | Add/edit expenses, category budget, balances, repayment log. |
 | Travel & Documents | Arrival/departure, stays, bookings, shared and personal files. |
 | Checklist | Group and private tasks. |
+| Reel | Saved reel/photo ideas, Instagram references, selected people, place and shot notes. |
 | Members & Settings | Invitations, roles, trip details, notification preferences. |
 | Admin | Curate places and dated events, see stale/expired items. |
 
@@ -170,7 +183,7 @@ On phones, keep the main trip navigation to Overview, Plan, Expenses, and Docume
 | Owner | Main records |
 | --- | --- |
 | Cognito | Sign-in identity and password hash. |
-| Core API | Profiles, trips, membership, invitations, itinerary, wishlists/votes, comments, budgets, expenses, repayments, stays, bookings, file metadata, contacts, checklists. |
+| Core API | Profiles, trips, membership, invitations, itinerary, wishlists/votes, comments, budgets, expenses, repayments, stays, bookings, file metadata, contacts, checklists, reel/photo ideas and selected members. |
 | Discovery service | Public places, amenities, event listings, source/freshness metadata, weather cache. |
 | S3 | File bytes for tickets, confirmations, and personal uploads. |
 | Queue/scheduler | Job requests and reminder triggers; durable business data stays in PostgreSQL. |

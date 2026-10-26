@@ -17,8 +17,8 @@ test('trip planning migration records version 4 once when applied twice', async 
   const config = loadConfig({ NODE_ENV: 'test', ENABLE_LOCAL_DEMO: 'true', LOCAL_SESSION_SECRET: secret, PGLITE_DATA_DIR: directory });
   const database = await openDatabase(config);
   try {
-    await migrate(database);
-    await migrate(database);
+    await migrate(database, 4);
+    await migrate(database, 4);
     const versions = await database.query<{ version: number }>('SELECT version FROM goa_core_migrations ORDER BY version');
     assert.deepEqual(versions.map((row) => row.version), [1, 2, 3, 4]);
     assert.equal(versions.filter((row) => row.version === 4).length, 1);

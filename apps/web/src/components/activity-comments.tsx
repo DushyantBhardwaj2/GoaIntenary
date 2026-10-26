@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { MessageCircle } from "lucide-react";
 import { api, core, type User } from "@/lib/client";
 import type { ActivityComment } from "@/lib/trip-planning-types";
+import { PlanSection } from "./plan-section";
 import { Busy, Dialog, Notice } from "./ui";
 import styles from "./comments.module.css";
 
@@ -36,7 +36,6 @@ function samePerson(left: string, right: string): boolean {
 }
 
 export function ActivityComments({ tripId, activityId, organiser }: { tripId: string; activityId: string; organiser: boolean }) {
-  const headingId = useId();
   const composerId = useId();
   const [comments, setComments] = useState<ActivityComment[] | null>(null);
   const [userId, setUserId] = useState("");
@@ -116,12 +115,17 @@ export function ActivityComments({ tripId, activityId, organiser }: { tripId: st
     setFormError(emptyComment);
   };
 
-  return <section className={styles.thread} aria-labelledby={headingId} aria-busy={loading}>
-    <header className={styles.heading}>
-      <span className={styles.kicker}><MessageCircle size={15} aria-hidden="true" /> NOTES</span>
-      <h3 id={headingId}>Comments</h3>
-      <p className={styles.lead}>Newest is last. Each time is India time.</p>
-    </header>
+  const summary = loadError
+    ? "Comments could not be loaded."
+    : comments === null
+      ? "Notes for the group. Each time is India time."
+      : comments.length === 0
+        ? "No comments yet. Newest is last."
+        : `${comments.length} ${comments.length === 1 ? "comment" : "comments"}. Newest is last.`;
+
+  return <PlanSection kicker="NOTES" title="Comments" summary={summary} expand={Boolean(loadError)}>
+    <section className={styles.thread} aria-label="Comments" aria-busy={loading}>
+    <p className={styles.lead}>Newest is last. Each time is India time.</p>
     {loadError && <Notice>{loadError} <button type="button" className="text-button" onClick={() => void load()}>Retry</button></Notice>}
     {loading && comments === null ? <div className={styles.loading}><Busy text="Loading comments…" /></div> : null}
     {comments && comments.length === 0 && <p className={styles.empty}>No comments yet. Leave a note for the group.</p>}
@@ -156,7 +160,8 @@ export function ActivityComments({ tripId, activityId, organiser }: { tripId: st
     </form>}
     {editing && <EditComment key={editing.id} tripId={tripId} activityId={activityId} comment={editing} onClose={() => setEditing(null)} onSaved={load} />}
     {removing && <DeleteComment tripId={tripId} activityId={activityId} comment={removing} onClose={() => setRemoving(null)} onSaved={load} />}
-  </section>;
+    </section>
+  </PlanSection>;
 }
 
 function EditComment({ tripId, activityId, comment, onClose, onSaved }: {
