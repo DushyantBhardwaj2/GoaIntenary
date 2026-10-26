@@ -1,0 +1,176 @@
+.thread {
+  --note-green: #173f35;
+  --note-forest: #245b49;
+  --note-ivory: #f7f4eb;
+  --note-paper: #fffefa;
+  --note-coral: #de6c4e;
+  --note-glass: #91aaa0;
+  --note-sand: #e8d9b4;
+  --note-muted: #687c75;
+  width: 100%;
+  min-width: 0;
+  color: var(--note-green);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.thread h3,
+.thread h4 {
+  font-family: var(--serif);
+  font-weight: 400;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.thread p { margin: 0; }
+
+.heading { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--note-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  line-height: 1.6;
+}
+
+.heading h3 {
+  font-size: 22px;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+}
+
+.lead {
+  color: var(--note-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.loading { min-height: 88px; display: grid; place-items: center; }
+
+.empty {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--note-ivory);
+  border: 1px dashed var(--note-sand);
+  border-radius: 10px;
+  color: var(--note-muted);
+  line-height: 1.6;
+}
+
+.list,
+.comment,
+.actions,
+.form {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.list { list-style: none; margin: 0; padding: 0; gap: 10px; }
+
+.comment {
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--note-paper);
+  border: 1px solid var(--note-sand);
+  border-left: 3px solid var(--note-coral);
+  border-radius: 10px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.author {
+  font-family: var(--serif);
+  font-size: 18px;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.when,
+.edited {
+  color: var(--note-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.thread .form label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.thread .form textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 96px;
+  resize: vertical;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.thread :global(.premium-dialog) {
+  width: min(440px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+}
+
+@media (max-width: 390px) {
+  .thread,
+  .heading,
+  .list,
+  .comment,
+  .meta,
+  .actions,
+  .form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+  }
+
+  .thread :global(.button),
+  .actions :global(.button),
+  .thread :global(.dialog-actions) :global(.button) { width: 100%; }
+
+  .thread :global(.dialog-actions) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comment,
+  .thread :global(button) { transition: none; }
+}

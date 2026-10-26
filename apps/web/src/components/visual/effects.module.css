@@ -1,0 +1,25 @@
+.backdrop{position:relative;isolation:isolate;overflow:hidden;background:#f7f4eb}
+.staticArt,.canvas,.veil{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.staticArt{z-index:0;opacity:.45;transition:opacity .5s ease}
+.staticArt.subdued{opacity:.08}.canvas{z-index:1;opacity:0;transition:opacity .7s ease}.canvas.ready{opacity:.85}
+.veil{z-index:2;background:linear-gradient(90deg,rgba(247,244,235,.98) 0%,rgba(247,244,235,.82) 36%,rgba(247,244,235,.15) 100%)}
+.foreground{position:relative;z-index:3;height:100%}
+.story{max-width:1250px;width:calc(100% - 100px);margin:0 auto 110px;padding-top:30px}
+.storyHeading{display:flex;justify-content:space-between;align-items:center;padding:0 6px 32px;gap:24px;border-bottom:1px solid #d9ded1;margin-bottom:42px}
+.storyHeading>span{font-size:10px;letter-spacing:2px;color:#687c75;font-weight:600}.storyHeading p{font-family:var(--serif,Georgia,serif);font-size:23px;margin:0;color:#173f35}
+.stack{list-style:none;padding:0;margin:0;isolation:isolate}
+.storyCard{position:sticky;top:calc(90px + var(--card-index)*18px);z-index:calc(1 + var(--card-index));min-height:390px;padding:55px 65px;display:grid;grid-template-columns:1.25fr 1fr;gap:55px;border:1px solid rgba(23,63,53,.12);border-radius:16px;margin-bottom:65px;box-shadow:0 14px 40px -25px rgba(23,63,53,.2);transform:scale(calc(1 - var(--story-recede,0)*.025));transform-origin:50% 0}
+.sand{background:#e8e6d9;color:#173f35}.green{background:#173f35;color:#fffefa}.coral{background:#e7ad94;color:#173f35}.ivory{background:#fffefa;color:#173f35}.gold{background:#e8d9b4;color:#173f35}
+.storyCard:focus-within{z-index:20;transform:none}
+.chapterCopy{align-self:center}.chapterKicker{font-size:10px;letter-spacing:1.6px;font-weight:600;line-height:1.8;display:block;max-width:400px;opacity:.8}
+.chapterCopy h2{font-family:var(--serif,Georgia,serif);font-size:clamp(35px,3.6vw,53px);font-weight:400;letter-spacing:-1.3px;line-height:1.08;margin:25px 0 22px;max-width:520px}
+.chapterCopy p{max-width:430px;font-size:15px;line-height:1.8;opacity:.83;margin:0 0 28px}
+.chapterCopy>a{display:inline-flex;align-items:center;gap:20px;font-size:13px;min-height:44px;font-weight:600;border-bottom:1px solid currentColor}
+.chapterCopy>a svg{transition:transform .2s}.chapterCopy>a:hover svg{transform:translate(3px,-3px)}
+.chapterArt{position:relative;display:flex;justify-content:center;align-items:center;min-height:270px;overflow:hidden}
+.chapterArt>svg{z-index:1;transform:rotate(-8deg)}.chapterOrbit{width:230px;height:230px;border:1px solid currentColor;opacity:.17;position:absolute;border-radius:50%}.chapterOrbit:after{content:"";position:absolute;inset:22px;border:1px dashed currentColor;border-radius:50%}
+.chapterNumber{position:absolute;right:2%;bottom:0;font-family:var(--serif,Georgia,serif);font-size:180px;line-height:1;opacity:.08;letter-spacing:-12px}.chapterArt small{position:absolute;bottom:10px;font-size:8px;letter-spacing:2px;text-align:center}
+@media(max-width:1000px){.story{width:calc(100% - 56px)}.storyCard{padding:38px;gap:30px}.chapterCopy h2{font-size:40px}.chapterArt{min-height:240px}.chapterOrbit{width:190px;height:190px}}
+@media(max-width:799px){.story{width:calc(100% - 40px);margin-bottom:65px}.storyHeading{align-items:flex-start;flex-direction:column;gap:12px;margin-bottom:25px}.storyHeading>span{font-size:10px;line-height:1.8}.storyHeading p{font-size:24px}.storyCard{position:relative;top:auto;transform:none;grid-template-columns:1fr;min-height:0;padding:30px 26px;margin-bottom:20px;gap:20px;border-radius:10px}.chapterCopy h2{font-size:36px;line-height:1.14;letter-spacing:-.7px;margin-top:21px}.chapterCopy p{font-size:14px;line-height:1.8;margin-bottom:12px}.chapterCopy>a{font-size:14px}.chapterKicker{font-size:10px;letter-spacing:1px}.chapterArt{min-height:125px;justify-content:flex-start;padding-left:18px}.chapterArt>svg{width:48px;height:48px}.chapterOrbit{width:110px;height:110px;left:-11px}.chapterNumber{font-size:120px;right:10%;letter-spacing:-6px;bottom:-12px}.chapterArt small{bottom:10px;left:135px;right:0;font-size:9px;letter-spacing:1px}.veil{background:linear-gradient(90deg,rgba(247,244,235,.96),rgba(247,244,235,.67))}.staticArt{opacity:.3}}
+@media(prefers-reduced-motion:reduce){.storyCard{position:relative;top:auto;transform:none}.staticArt,.canvas,.chapterCopy>a svg{transition:none}.canvas{display:none}}
+@media(max-height:650px){.storyCard{position:relative;top:auto;transform:none}}

@@ -1,0 +1,240 @@
+{
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json",
+  "retrievedAt": "2026-10-21T09:47:45.682782+00:00",
+  "region": "ap-south-1",
+  "publicationDate": "2026-10-20T00:32:32Z",
+  "version": "20261020003232",
+  "currency": "USD",
+  "products": [
+    {
+      "sku": "7Z4F2SQPHDHNHDBP",
+      "family": "Database Storage",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "storageMedia": "SSD",
+        "volumeType": "General Purpose-GP3",
+        "minVolumeSize": "5 GB",
+        "maxVolumeSize": "16 TB",
+        "engineCode": "14",
+        "databaseEngine": "PostgreSQL",
+        "deploymentOption": "Single-AZ",
+        "usagetype": "APS3-RDS:GP3-Storage",
+        "operation": "CreateDBInstance:0014",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service"
+      },
+      "prices": [
+        {
+          "unit": "GB-Mo",
+          "usd": "0.1310000000",
+          "description": "$0.131 per GB-month of provisioned GP3 storage running PostgreSQL",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "KKJH37REBV64A5UR",
+      "family": "Database Storage",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "storageMedia": "SSD",
+        "volumeType": "General Purpose-Aurora",
+        "minVolumeSize": "10 GB",
+        "maxVolumeSize": "64 TB",
+        "engineCode": "21",
+        "databaseEngine": "Aurora PostgreSQL",
+        "deploymentOption": "Single-AZ",
+        "usagetype": "APS3-Aurora:StorageUsage",
+        "operation": "CreateDBInstance:0021",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service"
+      },
+      "prices": [
+        {
+          "unit": "GB-Mo",
+          "usd": "0.1100000000",
+          "description": "USD 0.11 per GB-month of consumed storage for Aurora PostgreSQL",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "CCHGR4XFA9ABQV3D",
+      "family": "System Operation",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "engineCode": "21",
+        "databaseEngine": "Aurora PostgreSQL",
+        "group": "Aurora I/O Operation",
+        "groupDescription": "Input/Output Operation",
+        "usagetype": "APS3-Aurora:StorageIOUsage",
+        "operation": "CreateDBInstance:0021",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service"
+      },
+      "prices": [
+        {
+          "unit": "IOs",
+          "usd": "0.0000002200",
+          "description": "USD 0.22 per 1 million I/O requests for Aurora PostgreSQL",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "YA9RJG9UAYJKR7G8",
+      "family": "Database Instance",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "instanceType": "db.t4g.small",
+        "currentGeneration": "Yes",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "physicalProcessor": "AWS Graviton2",
+        "memory": "2 GiB",
+        "storage": "EBS Only",
+        "networkPerformance": "Up to 5 Gigabit",
+        "processorArchitecture": "64-bit",
+        "engineCode": "14",
+        "databaseEngine": "PostgreSQL",
+        "licenseModel": "No license required",
+        "deploymentOption": "Single-AZ",
+        "usagetype": "APS3-InstanceUsage:db.t4g.small",
+        "operation": "CreateDBInstance:0014",
+        "instanceTypeFamily": "T4G",
+        "normalizationSizeFactor": "1",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service",
+        "unbundledLicensing": "FALSE"
+      },
+      "prices": [
+        {
+          "unit": "Hrs",
+          "usd": "0.0420000000",
+          "description": "$ 0.042 per RDS db.t4g.small Single-AZ instance hour (or partial hour) running PostgreSQL",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "RCWXWCXS6HTSNKN3",
+      "family": "ServerlessV2",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "engineCode": "21",
+        "databaseEngine": "Aurora PostgreSQL",
+        "usagetype": "APS3-Aurora:ServerlessV2Usage",
+        "operation": "CreateDBInstance:0021",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service"
+      },
+      "prices": [
+        {
+          "unit": "ACU-Hr",
+          "usd": "0.1800000000",
+          "description": "USD 0.18 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "GUT9JVEQBEMZ2FC7",
+      "family": "Database Instance",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "instanceType": "db.t4g.micro",
+        "currentGeneration": "Yes",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "physicalProcessor": "AWS Graviton2",
+        "memory": "1 GiB",
+        "storage": "EBS Only",
+        "networkPerformance": "Up to 5 Gigabit",
+        "processorArchitecture": "64-bit",
+        "engineCode": "14",
+        "databaseEngine": "PostgreSQL",
+        "licenseModel": "No license required",
+        "deploymentOption": "Single-AZ",
+        "usagetype": "APS3-InstanceUsage:db.t4g.micro",
+        "operation": "CreateDBInstance:0014",
+        "instanceTypeFamily": "T4G",
+        "normalizationSizeFactor": "0.5",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service",
+        "unbundledLicensing": "FALSE"
+      },
+      "prices": [
+        {
+          "unit": "Hrs",
+          "usd": "0.0210000000",
+          "description": "$ 0.021 per RDS db.t4g.micro Single-AZ instance hour (or partial hour) running PostgreSQL",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "KPNCCRGXUQKZATYP",
+      "family": "Database Storage",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "storageMedia": "SSD",
+        "volumeType": "IO Optimized-Aurora",
+        "minVolumeSize": "10 GB",
+        "maxVolumeSize": "128 TB",
+        "engineCode": "21",
+        "databaseEngine": "Aurora PostgreSQL",
+        "deploymentOption": "Single-AZ",
+        "usagetype": "APS3-Aurora:IO-OptimizedStorageUsage",
+        "operation": "CreateDBInstance:0021",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service"
+      },
+      "prices": [
+        {
+          "unit": "GB-Mo",
+          "usd": "0.2480000000",
+          "description": "USD 0.248 per GB-month of I/O-Optimized consumed storage (Aurora PostgreSQL)",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "sku": "DEDC4FRS5FMJ8MWP",
+      "family": "ServerlessV2",
+      "attributes": {
+        "servicecode": "AmazonRDS",
+        "location": "Asia Pacific (Mumbai)",
+        "locationType": "AWS Region",
+        "storage": "Aurora IO Optimization Mode",
+        "engineCode": "21",
+        "databaseEngine": "Aurora PostgreSQL",
+        "usagetype": "APS3-Aurora:ServerlessV2IOOptimizedUsage",
+        "operation": "CreateDBInstance:0021",
+        "regionCode": "ap-south-1",
+        "servicename": "Amazon Relational Database Service"
+      },
+      "prices": [
+        {
+          "unit": "ACU-Hr",
+          "usd": "0.2400000000",
+          "description": "USD 0.24 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2 IO-Optimized",
+          "effectiveDate": "2026-10-01T00:00:00Z"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "region": "ap-south-1",
+  "monthlyBudgetUsd": 10,
+  "budgetEmail": "",
+  "accountId": "",
+  "databaseClusterId": "goa-dev-postgres",
+  "databaseResourceId": "pending",
+  "databaseHost": "pending",
+  "databaseName": "goa",
+  "coreArtifactKey": "pending/core.zip",
+  "discoveryArtifactKey": "pending/discovery.zip"
+}

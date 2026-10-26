@@ -1,0 +1,253 @@
+.panel {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  color: #173f35;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 0;
+}
+
+.kicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  color: #687c75;
+  line-height: 1.6;
+}
+
+.header h2 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 400;
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.intro {
+  margin: 8px 0 0;
+  color: #687c75;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.headerAction {
+  width: 100%;
+}
+
+.loading {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.card {
+  background: #fffefa;
+  border: 1px solid #dde1d5;
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e8d9b4;
+  color: #173f35;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.mode[data-mode="flight"] { background: #91aaa0; color: #173f35; }
+.mode[data-mode="train"] { background: #e8d9b4; }
+.mode[data-mode="bus"] { background: #f5dfd0; }
+
+.card h3 {
+  font-family: var(--serif);
+  font-size: clamp(22px, 6vw, 27px);
+  font-weight: 400;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.route,
+.zone,
+.notes,
+.people {
+  margin: 0;
+  color: #687c75;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.facts div { min-width: 0; }
+
+.facts dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #687c75;
+}
+
+.facts dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.reference {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cardActions :global(.button) {
+  flex: 1 1 8.5rem;
+}
+
+.dialog {
+  width: min(32rem, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+}
+
+.dialog :global(.dialog-top) h2 {
+  font-size: clamp(26px, 7vw, 34px);
+  overflow-wrap: anywhere;
+}
+
+.form {
+  min-width: 0;
+}
+
+.form :global(label) {
+  min-width: 0;
+}
+
+.form :global(input),
+.form :global(select),
+.form :global(textarea) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.travellers {
+  margin: 0;
+  padding: 12px 14px 8px;
+  border: 1px solid #dde1d5;
+  border-radius: 12px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.travellers legend {
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #173f35;
+}
+
+.choice {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #173f35;
+  cursor: pointer;
+}
+
+.choice input {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #173f35;
+}
+
+.choice span { overflow-wrap: anywhere; }
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.actions :global(.button) {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .headerAction { width: auto; flex: 0 0 auto; }
+
+  .actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .actions :global(.button) { width: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel :global(.button),
+  .dialog :global(.button) { transition: none; }
+}

@@ -1,0 +1,128 @@
+.panel {
+  --contact-green: #173f35;
+  --contact-forest: #245b49;
+  --contact-ivory: #f7f4eb;
+  --contact-paper: #fffefa;
+  --contact-coral: #de6c4e;
+  --contact-glass: #91aaa0;
+  --contact-sand: #e8d9b4;
+  --contact-muted: #687c75;
+  width: 100%;
+  min-width: 0;
+  color: var(--contact-green);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel h2, .panel h3, .panel h4 { font-family: var(--serif); font-weight: 400; margin: 0; overflow-wrap: anywhere; }
+.panel p { margin: 0; }
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heading { min-width: 0; flex: 1; }
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--contact-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  line-height: 1.6;
+}
+.heading h2 { font-size: 34px; letter-spacing: -0.8px; line-height: 1.1; margin-top: 6px; }
+.heading p { margin-top: 8px; color: var(--contact-muted); font-size: 14px; line-height: 1.6; max-width: 42rem; }
+
+.loading { min-height: 180px; display: grid; place-items: center; }
+.emptyLead {
+  margin: 0;
+  padding: 16px 18px;
+  background: var(--contact-ivory);
+  border: 1px dashed var(--contact-sand);
+  border-radius: 10px;
+  color: var(--contact-muted);
+  line-height: 1.6;
+}
+
+.roles, .cards, .actions, .form { display: flex; flex-direction: column; min-width: 0; }
+.roles { gap: 16px; }
+.cards { list-style: none; margin: 0; padding: 0; gap: 10px; }
+
+.role {
+  background: var(--contact-paper);
+  border: 1px solid var(--contact-sand);
+  border-radius: 12px;
+  padding: 16px 16px 14px;
+  min-width: 0;
+}
+.roleHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.role h3 { font-size: 26px; letter-spacing: -0.4px; line-height: 1.15; }
+.none { color: var(--contact-muted); font-size: 14px; line-height: 1.5; padding: 8px 0 2px; }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 14px 12px;
+  background: var(--contact-ivory);
+  border: 1px solid #efe6d4;
+  border-radius: 10px;
+  border-top: 3px solid var(--contact-forest);
+  min-width: 0;
+}
+.card[data-role="organiser"] { border-top-color: var(--contact-coral); }
+.card[data-role="hotel"] { border-top-color: var(--contact-forest); }
+.card[data-role="driver"] { border-top-color: var(--contact-glass); }
+.card[data-role="rental"] { border-top-color: var(--contact-sand); }
+.card[data-role="activity_provider"] { border-top-color: var(--contact-green); }
+.card h4 { font-size: 24px; letter-spacing: -0.3px; line-height: 1.2; }
+
+.phoneLink, .phoneText {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+.phoneLink {
+  width: fit-content;
+  color: var(--contact-green);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.phoneLink:hover { color: var(--contact-coral); }
+.phoneText { color: var(--contact-muted); }
+
+.note { color: var(--contact-green); line-height: 1.55; overflow-wrap: anywhere; }
+.meta { color: var(--contact-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.meta span { font-variant-numeric: tabular-nums; }
+
+.actions { flex-direction: row; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+.panel .form label { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; font-size: 13px; font-weight: 600; }
+.form label span { font-weight: 400; color: var(--contact-muted); }
+.form input, .form select, .form textarea { width: 100%; min-width: 0; font-weight: 400; }
+
+@media (max-width: 390px) {
+  .panel, .header, .roles, .role, .cards, .card, .actions, .form { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+  .header, .roleHead, .actions { align-items: stretch; }
+  .heading h2 { font-size: 30px; }
+  .role h3 { font-size: 24px; }
+  .panel :global(.button), .actions :global(.button), .roleHead :global(.button) { width: 100%; }
+  .panel :global(.dialog-actions) { flex-direction: column; align-items: stretch; }
+  .panel :global(.dialog-actions) :global(.button) { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phoneLink, .card, .panel :global(button) { transition: none; }
+}

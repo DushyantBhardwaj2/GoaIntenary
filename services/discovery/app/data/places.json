@@ -1,0 +1,146 @@
+[
+  {
+    "id": "calangute-beach",
+    "title": "Calangute Beach",
+    "description": "A broad sandy shore with nearby galleries and shops for a varied coastal day.",
+    "category": "beach", "region": "north", "area": "Calangute",
+    "latitude": 15.5439, "longitude": 73.7554,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "baga-beach",
+    "title": "Baga Beach",
+    "description": "Calangute's coastal neighbour, known for its lively beach scene and nightlife nearby.",
+    "category": "beach", "region": "north", "area": "Baga",
+    "latitude": 15.5553, "longitude": 73.7517,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "candolim-beach",
+    "title": "Candolim Beach",
+    "description": "A North Goa shoreline suited to a relaxed beach stop and coastal exploration.",
+    "category": "beach", "region": "north", "area": "Candolim",
+    "latitude": 15.5171, "longitude": 73.7627,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "anjuna-beach",
+    "title": "Anjuna Beach",
+    "description": "An evolving coastal neighbourhood whose beach and market heritage draw curious visitors.",
+    "category": "beach", "region": "north", "area": "Anjuna",
+    "latitude": 15.5735, "longitude": 73.7407,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "vagator-beach",
+    "title": "Vagator Beach",
+    "description": "A rocky coastline below cliffs, with shore views and room for an unhurried walk.",
+    "category": "beach", "region": "north", "area": "Vagator",
+    "latitude": 15.6013, "longitude": 73.7348,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "morjim-beach",
+    "title": "Morjim Beach",
+    "description": "A coastal stretch associated with seasonal Olive Ridley nesting; respect protected areas.",
+    "category": "beach", "region": "north", "area": "Morjim",
+    "latitude": 15.6268, "longitude": 73.7294,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "mandrem-beach",
+    "title": "Mandrem Beach",
+    "description": "A quieter northern shore associated with long walks, yoga and restful beach days.",
+    "category": "beach", "region": "north", "area": "Mandrem",
+    "latitude": 15.6656, "longitude": 73.7127,
+    "sourceUrl": "https://goa-tourism.com/siteseeing/beaches-of-north-goa/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "palolem-beach",
+    "title": "Palolem Beach",
+    "description": "A sandy bay framed by headlands in Canacona, with fishing and beachside village life.",
+    "category": "beach", "region": "south", "area": "Canacona",
+    "latitude": 15.0100, "longitude": 74.0232,
+    "sourceUrl": "https://goa-tourism.com/beach/palolem/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "colva-beach",
+    "title": "Colva Beach",
+    "description": "A well-connected South Goa beach near Margao, with shops around its central approach.",
+    "category": "beach", "region": "south", "area": "Colva, Salcete",
+    "latitude": 15.2794, "longitude": 73.9118,
+    "sourceUrl": "https://goa-tourism.com/guide/colva-beach/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "agonda-beach",
+    "title": "Agonda Beach",
+    "description": "A far-southern beach suggested by Goa Tourism for exploring the Canacona coast.",
+    "category": "beach", "region": "south", "area": "Agonda, Canacona",
+    "latitude": 15.0447, "longitude": 73.9861,
+    "sourceUrl": "https://goa-tourism.com/guide/colva-beach/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "basilica-bom-jesus",
+    "title": "Basilica of Bom Jesus",
+    "description": "An Old Goa heritage church housing the relics of Saint Francis Xavier.",
+    "category": "culture", "region": "central", "area": "Old Goa",
+    "latitude": 15.5009, "longitude": 73.9116,
+    "sourceUrl": "https://goa-tourism.com/guide/old-goa-heritage/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "se-cathedral",
+    "title": "Se Cathedral",
+    "description": "A major church in Old Goa's historic monument precinct, suited to a heritage walk.",
+    "category": "culture", "region": "central", "area": "Old Goa",
+    "latitude": 15.5036, "longitude": 73.9128,
+    "sourceUrl": "https://goa-tourism.com/guide/old-goa-heritage/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "st-francis-assisi",
+    "title": "Church and Convent of St Francis of Assisi",
+    "description": "Include this historic church and convent in a self-guided exploration of Old Goa.",
+    "category": "culture", "region": "central", "area": "Old Goa",
+    "latitude": 15.5023, "longitude": 73.9118,
+    "sourceUrl": "https://goa-tourism.com/guide/old-goa-heritage/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "viceroys-arch",
+    "title": "Viceroy's Arch",
+    "description": "A stone gateway by Old Goa's former river entrance, with historical carved details.",
+    "category": "culture", "region": "central", "area": "Old Goa riverfront",
+    "latitude": 15.5069, "longitude": 73.9142,
+    "sourceUrl": "https://goa-tourism.com/guide/old-goa-heritage/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "divar-island",
+    "title": "Divar Island",
+    "description": "A river-island landscape of winding village roads and greenery across from Old Goa.",
+    "category": "culture", "region": "central", "area": "Divar Island",
+    "latitude": 15.5300, "longitude": 73.9100,
+    "sourceUrl": "https://goa-tourism.com/guide/old-goa-heritage/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  },
+  {
+    "id": "archaeological-museum-old-goa",
+    "title": "Archaeological Museum, Old Goa",
+    "description": "A museum within the heritage precinct, introducing visitors to Goa's past through displays.",
+    "category": "culture", "region": "central", "area": "Old Goa",
+    "latitude": 15.5030, "longitude": 73.9117,
+    "sourceUrl": "https://goa-tourism.com/guide/old-goa-heritage/",
+    "checkedAt": "2026-10-21T10:26:11Z"
+  }
+]

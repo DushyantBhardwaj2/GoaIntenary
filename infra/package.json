@@ -1,0 +1,21 @@
+{
+  "name": "goa-aws-infrastructure",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "synth": "tsc && node dist/app.js",
+    "package": "node scripts/package.mjs",
+    "test": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-rds": "3.1154.0",
+    "aws-cdk-lib": "2.274.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "0.28.2",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "goa-trip-companion",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*", "services/core-api", "packages/*"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:local": "node scripts/dev.mjs --local",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "verify:local": "node scripts/verify-local.mjs",
+    "setup:discovery": "node scripts/discovery.mjs --setup",
+    "test:discovery": "node scripts/discovery.mjs",
+    "verify:planner": "node scripts/verify-planner.mjs",
+    "verify:splits": "node scripts/verify-splits.mjs",
+    "verify:map-search": "node scripts/verify-map-search.mjs",
+    "aws:login": "node infra/scripts/aws.mjs login",
+    "aws:doctor": "node infra/scripts/aws.mjs doctor",
+    "dev:aws": "node infra/scripts/web.mjs"
+  }
+}

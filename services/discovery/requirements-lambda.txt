@@ -1,0 +1,3 @@
+# Keep the existing pinned dependency graph; add only the AWS HTTP adapter.
+-r requirements-lock.txt
+mangum==0.22.0
