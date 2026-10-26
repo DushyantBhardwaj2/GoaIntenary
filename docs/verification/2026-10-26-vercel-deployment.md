@@ -9,8 +9,8 @@ The repository is [DushyantBhardwaj2/GoaIntenary](https://github.com/DushyantBha
 | GitHub Actions for `7ca2841` | [Succeeded](https://github.com/DushyantBhardwaj2/GoaIntenary/actions/runs/40294988479). |
 | Web build and tests | Local production build passed; 15 web tests passed. |
 | Core tests | 108 passed locally after updating the migration history expectation to include migration 004. |
-| Vercel production redeployment | [Ready](https://vercel.com/dushyant2/goa-intenary/4yP38vWutHYyfP1koTuskFpNh3Pp), with `APP_ORIGIN=https://goa-intenary.vercel.app`. |
-| Public home | Loaded in a live browser; [screenshot](2026-10-26-vercel-live.png). |
+| Vercel production redeployment | [Ready](https://vercel.com/dushyant2/goa-intenary/8GcYGPCvk2cBtDkkkkRpwqAsGL69) (`f3790ec`), with `APP_ORIGIN=https://goa-intenary.vercel.app`. |
+| Public home | Loaded in a live browser and verified; new favicon and apple-touch icons active. |
 | Explore | Received 16 reviewed Goa places and 16 corresponding map pins from the deployed discovery API. |
 | My trips | Redirected unauthenticated visitor to the sign-in flow. |
 
