@@ -1,6 +1,19 @@
 "use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, CalendarDays, Clock3, Edit3, MapPin, Plus, RefreshCw, Trash2, Users } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronUp,
+  Clock3,
+  Edit3,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { api, core, type Activity, type Trip } from "@/lib/client";
 import { dayLabel, overlappingIds, tripDays } from "@/lib/planner";
 import { money } from "@/lib/money";
@@ -9,15 +22,460 @@ import { ActivityExtras } from "./activity-extras";
 import { GoaMap } from "./goa-map";
 import { activityPoints } from "@/lib/map-points";
 import { Busy, Dialog, EmptyState, Notice } from "./ui";
+
 export function Planner({ trip, onChanged }: { trip: Trip; onChanged: () => Promise<void> }) {
-  const [activities, setActivities] = useState<Activity[]>([]); const [day, setDay] = useState<string | null>(trip.startDate); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [busy, setBusy] = useState(""); const [form, setForm] = useState<Activity | "new" | null>(null); const [removing, setRemoving] = useState<Activity | null>(null); const days = tripDays(trip.startDate, trip.endDate);
-  useEffect(() => { if (day && (day < trip.startDate || day > trip.endDate)) setDay(trip.startDate); }, [day, trip.startDate, trip.endDate]);
-  const load = useCallback(async () => { setLoading(true); try { setActivities((await api<{ activities: Activity[] }>(`${core}/trips/${trip.id}/activities`)).activities); } finally { setLoading(false); } }, [trip.id]);
-  const refresh = useCallback(async () => { setError(""); try { await load(); } catch (e) { setError(e instanceof Error ? e.message : "Unable to load the plan."); } }, [load]);
-  useEffect(() => { void refresh(); }, [refresh]);
-  const selected = useMemo(() => activities.filter(item => item.day === day).sort((a, b) => a.sortOrder - b.sortOrder), [activities, day]); const overlaps = overlappingIds(selected);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [day, setDay] = useState<string | null>(trip.startDate);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState("");
+  const [form, setForm] = useState<Activity | "new" | null>(null);
+  const [removing, setRemoving] = useState<Activity | null>(null);
+  const [minimizedIds, setMinimizedIds] = useState<Set<string>>(() => {
+    try {
+      const saved = typeof window !== "undefined" ? window.localStorage.getItem(`goa-trip:${trip.id}:minimized-plans`) : null;
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const days = tripDays(trip.startDate, trip.endDate);
+
+  useEffect(() => {
+    if (day && (day < trip.startDate || day > trip.endDate)) setDay(trip.startDate);
+  }, [day, trip.startDate, trip.endDate]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setActivities((await api<{ activities: Activity[] }>(`${core}/trips/${trip.id}/activities`)).activities);
+    } finally {
+      setLoading(false);
+    }
+  }, [trip.id]);
+
+  const refresh = useCallback(async () => {
+    setError("");
+    try {
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load the plan.");
+    }
+  }, [load]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const selected = useMemo(
+    () => activities.filter((item) => item.day === day).sort((a, b) => a.sortOrder - b.sortOrder),
+    [activities, day]
+  );
+  const overlaps = overlappingIds(selected);
   const pins = useMemo(() => activityPoints(selected), [selected]);
-  const mutate = async (key: string, work: () => Promise<void>) => { if (busy) return; setBusy(key); setError(""); try { await work(); await load(); await onChanged(); } catch (e) { setError(e instanceof Error ? e.message : "Unable to update the plan."); } finally { setBusy(""); } };
-  const reorder = (index: number, direction: number) => void mutate("order", async () => { const reordered = selected.map(item => item.id); [reordered[index], reordered[index + direction]] = [reordered[index + direction], reordered[index]]; await api(`${core}/trips/${trip.id}/activities/reorder`, { method: "POST", body: JSON.stringify({ day, activityIds: reordered }) }); });
-  return <div className="planner-layout"><aside className="day-rail"><div><span className="eyebrow">MAKE IT YOUR OWN</span><h3>Your days</h3></div><nav aria-label="Itinerary days">{days.map((value, index) => { const count = activities.filter(item => item.day === value).length; return <button key={value} className={day === value ? "selected" : ""} onClick={() => setDay(value)}><span className="day-chip-code">D{String(index + 1).padStart(2, "0")}</span><span>DAY {String(index + 1).padStart(2, "0")}</span><strong>{dayLabel(value)}</strong><small>{count} {count === 1 ? "plan" : "plans"}</small></button>; })}<button className={`unscheduled-day ${day === null ? "selected" : ""}`} onClick={() => setDay(null)}><span className="day-chip-code">Later</span><span>A LITTLE ROOM FOR LATER</span><strong>Unscheduled</strong><small>{activities.filter(item => !item.day).length} {activities.filter(item => !item.day).length === 1 ? "idea" : "ideas"}</small></button></nav></aside><section className="day-content"><div className="section-heading"><div><span className="eyebrow">{day ? "YOUR PACE. YOUR PEOPLE. YOUR PLAN." : "GOOD IDEAS DON’T NEED A DATE YET"}</span><h2>{day ? dayLabel(day) : "A few ideas for later."}</h2></div><div className="button-row no-margin"><button className="icon-button" onClick={() => void refresh()} aria-label="Refresh itinerary" disabled={loading}><RefreshCw size={17} className={loading ? "spinner" : ""} /></button><button className="button coral" onClick={() => setForm("new")}><Plus size={17} />Add a plan</button></div></div><p className="tab-intro">{day ? "Build the day by hand. Move plans with the arrows; the order is separate from the time labels." : "Keep a few possibilities here. Move them into a day when you’re ready."}</p>{error && <Notice>{error} <button className="text-button" onClick={() => void refresh()}>Reload latest plan</button></Notice>}{overlaps.size > 0 && <Notice tone="info">A few times overlap. Take a look and adjust them if you want; your plans stay in the order you chose.</Notice>}<GoaMap points={pins} trip={trip} defaultDay={day} onPlaceAdded={async () => { await load(); await onChanged(); }} title={day ? "This day on the map" : "Unscheduled places"} actionLabel="Edit this plan" onChoose={id => setForm(activities.find(activity => activity.id === id) ?? null)} />{loading && !activities.length ? <div className="inline-loading"><Busy text="Opening the day…" /></div> : selected.length ? <div className="activity-list">{selected.map((activity, index) => <article className="activity-card" key={activity.id}><div className="activity-order"><span>{String(index + 1).padStart(2, "0")}</span><button className="icon-button" disabled={Boolean(busy) || index === 0} aria-label={`Move ${activity.title} up`} onClick={() => reorder(index, -1)}><ArrowUp size={16} /></button><button className="icon-button" disabled={Boolean(busy) || index === selected.length - 1} aria-label={`Move ${activity.title} down`} onClick={() => reorder(index, 1)}><ArrowDown size={16} /></button></div><div className="activity-body"><div className="activity-meta"><span className={`category-pill ${activity.category}`}>{activity.category}</span><span><Clock3 size={13} />{activity.startTime ? `${activity.startTime}${activity.endTime ? ` – ${activity.endTime}` : ""}` : "Time is open"}</span>{overlaps.has(activity.id) && <span className="overlap-label">Overlapping time</span>}</div><h3>{activity.title}</h3>{activity.location && <p className="activity-location"><MapPin size={14} />{activity.location}</p>}{activity.description && <p>{activity.description}</p>}{activity.meetingPoint && <p className="activity-detail"><Users size={14} /><strong>Meet at</strong> {activity.meetingPoint}</p>}{activity.notes && <div className="activity-notes"><span>THE LITTLE DETAILS</span><p>{activity.notes}</p></div>}<div className="activity-bottom"><span className="activity-estimate">{money(activity.estimatedCostPaise)} <small>estimated</small></span><label className="move-label">Move to<select disabled={Boolean(busy)} value={activity.day ?? ""} onChange={e => void mutate(activity.id, async () => { await api(`${core}/trips/${trip.id}/activities/${activity.id}`, { method: "PATCH", body: JSON.stringify({ day: e.target.value || null, version: activity.version }) }); })}><option value="">Unscheduled</option>{days.map((value, i) => <option key={value} value={value}>Day {i + 1} · {dayLabel(value)}</option>)}</select></label><button className="icon-button" aria-label={`Edit ${activity.title}`} onClick={() => setForm(activity)} disabled={Boolean(busy)}><Edit3 size={17} /></button><button className="icon-button danger" aria-label={`Delete ${activity.title}`} onClick={() => setRemoving(activity)} disabled={Boolean(busy)}><Trash2 size={17} /></button></div><ActivityExtras tripId={trip.id} activityId={activity.id} organiser={trip.role === "organiser"} /></div></article>)}</div> : <EmptyState title={day ? "A day with possibilities." : "Leave room for a good idea."}><p>{day ? "A coffee, a coastal pause, a long lunch. Add the first plan and make the day yours." : "Save a thought here without choosing a day or a time."}</p><button className="button secondary" onClick={() => setForm("new")}><Plus size={17} />Add your first idea</button></EmptyState>}</section>{form && <ActivityForm trip={trip} activity={form === "new" ? undefined : form} defaultDay={day} onClose={() => setForm(null)} onSaved={async () => { await load(); await onChanged(); }} />}{removing && <Dialog title="Make a little space?" onClose={() => setRemoving(null)} busy={Boolean(busy)}><p>Remove “{removing.title}” from this trip? Saved places stay in your collection.</p><div className="dialog-actions"><button className="button secondary" onClick={() => setRemoving(null)} disabled={Boolean(busy)}>Keep this plan</button><button className="button destructive" disabled={Boolean(busy)} onClick={() => void mutate("delete", async () => { await api(`${core}/trips/${trip.id}/activities/${removing.id}`, { method: "DELETE" }); setRemoving(null); })}>{busy ? <Busy /> : "Remove plan"}</button></div>{error && <Notice>{error}</Notice>}</Dialog>}</div>;
+
+  const toggleCard = (id: string) => {
+    setMinimizedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        window.localStorage.setItem(`goa-trip:${trip.id}:minimized-plans`, JSON.stringify(Array.from(next)));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
+  const allMinimized = selected.length > 0 && selected.every((item) => minimizedIds.has(item.id));
+
+  const toggleAll = () => {
+    setMinimizedIds((prev) => {
+      const next = new Set(prev);
+      if (allMinimized) {
+        selected.forEach((item) => next.delete(item.id));
+      } else {
+        selected.forEach((item) => next.add(item.id));
+      }
+      try {
+        window.localStorage.setItem(`goa-trip:${trip.id}:minimized-plans`, JSON.stringify(Array.from(next)));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
+  const mutate = async (key: string, work: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(key);
+    setError("");
+    try {
+      await work();
+      await load();
+      await onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to update the plan.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const reorder = (index: number, direction: number) =>
+    void mutate("order", async () => {
+      const reordered = selected.map((item) => item.id);
+      [reordered[index], reordered[index + direction]] = [reordered[index + direction], reordered[index]];
+      await api(`${core}/trips/${trip.id}/activities/reorder`, {
+        method: "POST",
+        body: JSON.stringify({ day, activityIds: reordered }),
+      });
+    });
+
+  return (
+    <div className="planner-layout">
+      <aside className="day-rail">
+        <div>
+          <span className="eyebrow">MAKE IT YOUR OWN</span>
+          <h3>Your days</h3>
+        </div>
+        <nav aria-label="Itinerary days">
+          {days.map((value, index) => {
+            const count = activities.filter((item) => item.day === value).length;
+            return (
+              <button key={value} className={day === value ? "selected" : ""} onClick={() => setDay(value)}>
+                <span className="day-chip-code">D{String(index + 1).padStart(2, "0")}</span>
+                <span>DAY {String(index + 1).padStart(2, "0")}</span>
+                <strong>{dayLabel(value)}</strong>
+                <small>
+                  {count} {count === 1 ? "plan" : "plans"}
+                </small>
+              </button>
+            );
+          })}
+          <button
+            className={`unscheduled-day ${day === null ? "selected" : ""}`}
+            onClick={() => setDay(null)}
+          >
+            <span className="day-chip-code">Later</span>
+            <span>A LITTLE ROOM FOR LATER</span>
+            <strong>Unscheduled</strong>
+            <small>
+              {activities.filter((item) => !item.day).length}{" "}
+              {activities.filter((item) => !item.day).length === 1 ? "idea" : "ideas"}
+            </small>
+          </button>
+        </nav>
+      </aside>
+
+      <section className="day-content">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">
+              {day ? "YOUR PACE. YOUR PEOPLE. YOUR PLAN." : "GOOD IDEAS DON’T NEED A DATE YET"}
+            </span>
+            <h2>{day ? dayLabel(day) : "A few ideas for later."}</h2>
+          </div>
+          <div className="button-row no-margin">
+            {selected.length > 0 && (
+              <button
+                type="button"
+                className="plan-toggle-all"
+                onClick={toggleAll}
+                aria-label={allMinimized ? "Expand all plans for this day" : "Minimize all plans for this day"}
+              >
+                {allMinimized ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+                <span>{allMinimized ? "Expand all" : "Minimize all"}</span>
+              </button>
+            )}
+            <button
+              className="icon-button"
+              onClick={() => void refresh()}
+              aria-label="Refresh itinerary"
+              disabled={loading}
+            >
+              <RefreshCw size={17} className={loading ? "spinner" : ""} />
+            </button>
+            <button className="button coral" onClick={() => setForm("new")}>
+              <Plus size={17} />
+              Add a plan
+            </button>
+          </div>
+        </div>
+
+        <p className="tab-intro">
+          {day
+            ? "Build the day by hand. Move plans with the arrows; the order is separate from the time labels."
+            : "Keep a few possibilities here. Move them into a day when you’re ready."}
+        </p>
+
+        {error && (
+          <Notice>
+            {error}{" "}
+            <button className="text-button" onClick={() => void refresh()}>
+              Reload latest plan
+            </button>
+          </Notice>
+        )}
+
+        {overlaps.size > 0 && (
+          <Notice tone="info">
+            A few times overlap. Take a look and adjust them if you want; your plans stay in the order you chose.
+          </Notice>
+        )}
+
+        <GoaMap
+          points={pins}
+          trip={trip}
+          defaultDay={day}
+          onPlaceAdded={async () => {
+            await load();
+            await onChanged();
+          }}
+          title={day ? "This day on the map" : "Unscheduled places"}
+          actionLabel="Edit this plan"
+          onChoose={(id) => setForm(activities.find((activity) => activity.id === id) ?? null)}
+        />
+
+        {loading && !activities.length ? (
+          <div className="inline-loading">
+            <Busy text="Opening the day…" />
+          </div>
+        ) : selected.length ? (
+          <div className="activity-list">
+            {selected.map((activity, index) => {
+              const isMinimized = minimizedIds.has(activity.id);
+              return (
+                <article
+                  className={`activity-card ${isMinimized ? "is-minimized" : ""}`}
+                  key={activity.id}
+                >
+                  <div className="activity-order">
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <button
+                      className="icon-button"
+                      disabled={Boolean(busy) || index === 0}
+                      aria-label={`Move ${activity.title} up`}
+                      onClick={() => reorder(index, -1)}
+                    >
+                      <ArrowUp size={16} />
+                    </button>
+                    <button
+                      className="icon-button"
+                      disabled={Boolean(busy) || index === selected.length - 1}
+                      aria-label={`Move ${activity.title} down`}
+                      onClick={() => reorder(index, 1)}
+                    >
+                      <ArrowDown size={16} />
+                    </button>
+                  </div>
+
+                  <div className="activity-body">
+                    <div className="activity-card-header">
+                      <div className="activity-meta">
+                        <span className={`category-pill ${activity.category}`}>{activity.category}</span>
+                        <span>
+                          <Clock3 size={13} />
+                          {activity.startTime
+                            ? `${activity.startTime}${activity.endTime ? ` – ${activity.endTime}` : ""}`
+                            : "Time is open"}
+                        </span>
+                        {overlaps.has(activity.id) && <span className="overlap-label">Overlapping time</span>}
+                      </div>
+                      <button
+                        type="button"
+                        className="plan-toggle"
+                        aria-expanded={!isMinimized}
+                        aria-controls={`activity-details-${activity.id}`}
+                        aria-label={`${isMinimized ? "Expand" : "Minimize"} ${activity.title}`}
+                        onClick={() => toggleCard(activity.id)}
+                      >
+                        {isMinimized ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronUp size={16} aria-hidden="true" />}
+                        <span>{isMinimized ? "Expand" : "Minimize"}</span>
+                      </button>
+                    </div>
+
+                    <h3
+                      onClick={() => isMinimized && toggleCard(activity.id)}
+                      style={isMinimized ? { cursor: "pointer" } : undefined}
+                      title={isMinimized ? "Click to expand details" : undefined}
+                    >
+                      {activity.title}
+                    </h3>
+
+                    {activity.location && (
+                      <p className="activity-location">
+                        <MapPin size={14} />
+                        {activity.location}
+                      </p>
+                    )}
+
+                    {isMinimized ? (
+                      <div className="activity-bottom compact">
+                        <span className="activity-estimate">
+                          {money(activity.estimatedCostPaise)} <small>estimated</small>
+                        </span>
+                        <label className="move-label">
+                          Move to
+                          <select
+                            disabled={Boolean(busy)}
+                            value={activity.day ?? ""}
+                            onChange={(e) =>
+                              void mutate(activity.id, async () => {
+                                await api(`${core}/trips/${trip.id}/activities/${activity.id}`, {
+                                  method: "PATCH",
+                                  body: JSON.stringify({ day: e.target.value || null, version: activity.version }),
+                                });
+                              })
+                            }
+                          >
+                            <option value="">Unscheduled</option>
+                            {days.map((value, i) => (
+                              <option key={value} value={value}>
+                                Day {i + 1} · {dayLabel(value)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          className="icon-button"
+                          aria-label={`Edit ${activity.title}`}
+                          onClick={() => setForm(activity)}
+                          disabled={Boolean(busy)}
+                        >
+                          <Edit3 size={17} />
+                        </button>
+                        <button
+                          className="icon-button danger"
+                          aria-label={`Delete ${activity.title}`}
+                          onClick={() => setRemoving(activity)}
+                          disabled={Boolean(busy)}
+                        >
+                          <Trash2 size={17} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div id={`activity-details-${activity.id}`}>
+                        {activity.description && <p>{activity.description}</p>}
+                        {activity.meetingPoint && (
+                          <p className="activity-detail">
+                            <Users size={14} />
+                            <strong>Meet at</strong> {activity.meetingPoint}
+                          </p>
+                        )}
+                        {activity.notes && (
+                          <div className="activity-notes">
+                            <span>THE LITTLE DETAILS</span>
+                            <p>{activity.notes}</p>
+                          </div>
+                        )}
+                        <div className="activity-bottom">
+                          <span className="activity-estimate">
+                            {money(activity.estimatedCostPaise)} <small>estimated</small>
+                          </span>
+                          <label className="move-label">
+                            Move to
+                            <select
+                              disabled={Boolean(busy)}
+                              value={activity.day ?? ""}
+                              onChange={(e) =>
+                                void mutate(activity.id, async () => {
+                                  await api(`${core}/trips/${trip.id}/activities/${activity.id}`, {
+                                    method: "PATCH",
+                                    body: JSON.stringify({ day: e.target.value || null, version: activity.version }),
+                                  });
+                                })
+                              }
+                            >
+                              <option value="">Unscheduled</option>
+                              {days.map((value, i) => (
+                                <option key={value} value={value}>
+                                  Day {i + 1} · {dayLabel(value)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <button
+                            className="icon-button"
+                            aria-label={`Edit ${activity.title}`}
+                            onClick={() => setForm(activity)}
+                            disabled={Boolean(busy)}
+                          >
+                            <Edit3 size={17} />
+                          </button>
+                          <button
+                            className="icon-button danger"
+                            aria-label={`Delete ${activity.title}`}
+                            onClick={() => setRemoving(activity)}
+                            disabled={Boolean(busy)}
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                        <ActivityExtras
+                          tripId={trip.id}
+                          activityId={activity.id}
+                          organiser={trip.role === "organiser"}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState title={day ? "A day with possibilities." : "Leave room for a good idea."}>
+            <p>
+              {day
+                ? "A coffee, a coastal pause, a long lunch. Add the first plan and make the day yours."
+                : "Save a thought here without choosing a day or a time."}
+            </p>
+            <button className="button secondary" onClick={() => setForm("new")}>
+              <Plus size={17} />
+              Add your first idea
+            </button>
+          </EmptyState>
+        )}
+      </section>
+
+      {form && (
+        <ActivityForm
+          trip={trip}
+          activity={form === "new" ? undefined : form}
+          defaultDay={day}
+          onClose={() => setForm(null)}
+          onSaved={async () => {
+            await load();
+            await onChanged();
+          }}
+        />
+      )}
+
+      {removing && (
+        <Dialog title="Make a little space?" onClose={() => setRemoving(null)} busy={Boolean(busy)}>
+          <p>Remove “{removing.title}” from this trip? Saved places stay in your collection.</p>
+          <div className="dialog-actions">
+            <button className="button secondary" onClick={() => setRemoving(null)} disabled={Boolean(busy)}>
+              Keep this plan
+            </button>
+            <button
+              className="button destructive"
+              disabled={Boolean(busy)}
+              onClick={() =>
+                void mutate("delete", async () => {
+                  await api(`${core}/trips/${trip.id}/activities/${removing.id}`, { method: "DELETE" });
+                  setRemoving(null);
+                })
+              }
+            >
+              {busy ? <Busy /> : "Remove plan"}
+            </button>
+          </div>
+          {error && <Notice>{error}</Notice>}
+        </Dialog>
+      )}
+    </div>
+  );
 }
