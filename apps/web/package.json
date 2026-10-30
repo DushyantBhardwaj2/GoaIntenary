@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test src/lib/security.test.ts src/lib/planner.test.ts src/lib/map-and-splits.test.ts src/app/api/discovery/proxy.test.ts"
+    "test": "tsx --test src/lib/security.test.ts src/lib/planner.test.ts src/lib/map-and-splits.test.ts src/lib/client.test.ts src/lib/planner-data.test.ts src/app/api/discovery/proxy.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.930.0",

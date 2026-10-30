@@ -6,6 +6,7 @@ import type { ActivityAttendees, ActivityStatus, ActivityStatusValue } from "@/l
 import { ActivityComments } from "./activity-comments";
 import { BookingLinkPicker } from "./booking-link-picker";
 import { PlanSection } from "./plan-section";
+import { usePlannerData } from "./planner-data";
 import { Busy, Notice } from "./ui";
 
 const statusOptions: { value: ActivityStatusValue; label: string }[] = [
@@ -27,6 +28,9 @@ function personName(id: string, people: ExpenseParticipant[] | null): string {
 }
 
 export function ActivityExtras({ tripId, activityId, organiser }: { tripId: string; activityId: string; organiser: boolean }) {
+  const shared = usePlannerData();
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [peopleOpen, setPeopleOpen] = useState(false);
   const statusId = useId();
   const statusHelpId = useId();
   const namesId = useId();
@@ -102,16 +106,16 @@ export function ActivityExtras({ tripId, activityId, organiser }: { tripId: stri
     setPeopleLoading(true);
     setPeopleError("");
     try {
-      const result = await api<{ participants: ExpenseParticipant[] }>(`${core}/trips/${tripId}/expense-participants`);
+      const people = shared ? await shared.people() : (await api<{ participants: ExpenseParticipant[] }>(`${core}/trips/${tripId}/expense-participants`)).participants;
       if (peopleGen.current !== current || scopeRef.current !== at) return;
-      setParticipants(result.participants);
+      setParticipants(people);
     } catch (error) {
       if (peopleGen.current !== current || scopeRef.current !== at) return;
       setPeopleError(problem(error, "Unable to load people for this trip."));
     } finally {
       if (peopleGen.current === current) setPeopleLoading(false);
     }
-  }, [scope, tripId]);
+  }, [scope, tripId, shared]);
 
   const loadAttendees = useCallback(async () => {
     const current = ++attendeesGen.current;
@@ -131,9 +135,9 @@ export function ActivityExtras({ tripId, activityId, organiser }: { tripId: stri
     }
   }, [attendeesUrl, scope]);
 
-  useEffect(() => { void loadStatus(); }, [loadStatus]);
-  useEffect(() => { void loadPeople(); }, [loadPeople]);
-  useEffect(() => { void loadAttendees(); }, [loadAttendees]);
+  useEffect(() => { if (statusOpen) void loadStatus(); }, [loadStatus, statusOpen]);
+  useEffect(() => { if (peopleOpen) void loadPeople(); }, [loadPeople, peopleOpen]);
+  useEffect(() => { if (peopleOpen) void loadAttendees(); }, [loadAttendees, peopleOpen]);
 
   const saveStatus = async (next: ActivityStatusValue) => {
     if (statusBusy) return;
@@ -194,7 +198,7 @@ export function ActivityExtras({ tripId, activityId, organiser }: { tripId: stri
     : "Who is on this plan.";
 
   return <section style={blockStyle} aria-label="Status, people, and booking">
-    <PlanSection title="Status" summary={statusSummary} expand={Boolean(statusLoadError || statusSaveError)}>
+    <PlanSection title="Status" summary={statusSummary} defaultOpen={false} onOpenChange={setStatusOpen} expand={Boolean(statusLoadError || statusSaveError)}>
     <div style={stackStyle}>
       {statusLoadError && <Notice>{statusLoadError} <button type="button" className="text-button" onClick={() => void loadStatus()}>Retry</button></Notice>}
       {statusLoading && status === null ? <p style={hintStyle} role="status"><Busy text="Loading status…" /></p> : null}
@@ -211,7 +215,7 @@ export function ActivityExtras({ tripId, activityId, organiser }: { tripId: stri
       <p id={statusHelpId} style={hintStyle}>A cancelled plan stays on this day.</p>
     </div>
     </PlanSection>
-    <PlanSection title="Who is coming" summary={peopleSummary} summaryId={namesId} expand={Boolean(peopleError || attendeesLoadError || attendeesSaveError)}>
+    <PlanSection title="Who is coming" summary={peopleSummary} summaryId={namesId} defaultOpen={false} onOpenChange={setPeopleOpen} expand={Boolean(peopleError || attendeesLoadError || attendeesSaveError)}>
     <div style={stackStyle}>
       {peopleError && <Notice>{peopleError} <button type="button" className="text-button" onClick={() => void loadPeople()}>Retry</button></Notice>}
       {attendeesLoadError && <Notice>{attendeesLoadError} <button type="button" className="text-button" onClick={() => void loadAttendees()}>Retry</button></Notice>}

@@ -3,6 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { Pool } from 'pg';
 import { Signer } from '@aws-sdk/rds-signer';
 import { secureDatabaseUrl, type CoreConfig } from './config.js';
+import { postgresDatabase } from './postgres-database.js';
 
 export interface SqlClient {
   query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<T[]>;
@@ -11,6 +12,11 @@ export interface SqlClient {
 export interface Database extends SqlClient {
   readonly storage: 'pglite' | 'postgres';
   transaction<T>(work: (client: SqlClient) => Promise<T>): Promise<T>;
+  close(): Promise<void>;
+  createRequestScope?(): DatabaseRequestScope;
+}
+export interface DatabaseRequestScope {
+  run<T>(work: () => T): T;
   close(): Promise<void>;
 }
 
@@ -32,41 +38,15 @@ export async function openDatabase(config: CoreConfig): Promise<Database> {
       connection = { host: hostname, port, user: username, database: decodeURIComponent(url.pathname.slice(1)), password: () => signer.getAuthToken() };
     }
     const pool = new Pool({ ...connection, max: config.lambda ? 2 : 5,
-      connectionTimeoutMillis: 8_000, idleTimeoutMillis: config.databaseIamAuth ? 1_000 : 30_000,
+      // Allow an idle Aurora cluster time to resume. This waits for connection
+      // acquisition only; failed writes are never replayed automatically.
+      connectionTimeoutMillis: config.databaseIamAuth ? 20_000 : 8_000, idleTimeoutMillis: config.databaseIamAuth ? 1_000 : 30_000,
       allowExitOnIdle: config.databaseIamAuth,
       ...(config.databaseTls ? { ssl: { rejectUnauthorized: true } } : {}),
     });
     // Never log a pg Error: its detail/query can contain private values.
     pool.on('error', () => { process.stderr.write('PostgreSQL connection unavailable.\n'); });
-    async function standalone(sql: string, values?: unknown[]) {
-      if (!config.databaseIamAuth) return pool.query(sql, values);
-      // Lambda can freeze before idle timers fire. Explicitly close IAM-backed
-      // connections after each operation so an idle Express cluster can pause.
-      const client = await pool.connect();
-      try { return await client.query(sql, values); }
-      finally { client.release(true); }
-    }
-    return {
-      storage: 'postgres',
-      async query<T>(sql: string, values?: unknown[]) { return (await standalone(sql, values)).rows as T[]; },
-      async exec(sql) { await standalone(sql); },
-      async transaction<T>(work: (client: SqlClient) => Promise<T>): Promise<T> {
-        const client = await pool.connect();
-        try {
-          await client.query('BEGIN');
-          const result = await work({
-            async query<R>(sql: string, values?: unknown[]) { return (await client.query(sql, values)).rows as R[]; },
-            async exec(sql) { await client.query(sql); },
-          });
-          await client.query('COMMIT');
-          return result;
-        } catch (error) {
-          await client.query('ROLLBACK').catch(() => undefined);
-          throw error;
-        } finally { client.release(config.databaseIamAuth); }
-      },
-      async close() { await pool.end(); },
-    };
+    return postgresDatabase(pool, config.databaseIamAuth === true);
   }
   if (config.production || config.lambda) throw new Error('Embedded storage is restricted to local development.');
   await mkdir(config.pgliteDataDir, { recursive: true });

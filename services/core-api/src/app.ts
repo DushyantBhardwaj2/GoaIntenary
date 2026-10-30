@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import Fastify, { LogController, type FastifyInstance, type FastifyRequest } from 'fastify';
 import { createAuthenticator, uuidPattern, type Authenticate } from './auth.js';
 import { loadConfig, type CoreConfig } from './config.js';
-import { latestMigration, migrate, openDatabase, type Database } from './database.js';
+import { latestMigration, migrate, openDatabase, type Database, type DatabaseRequestScope } from './database.js';
 import { ApiError, invalid, notFound, unauthenticated } from './errors.js';
 import { TripRepository } from './repository.js';
 import type { CreateTrip, User } from './types.js';
@@ -49,6 +49,23 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
   app.decorateRequest('user', null);
   app.addHook('onClose', async () => { if (ownsDatabase) await database.close(); });
+  if (database.createRequestScope) {
+    const scopes = new WeakMap<FastifyRequest, DatabaseRequestScope>();
+    app.addHook('onRequest', (request, _reply, done) => {
+      const scope = database.createRequestScope!();
+      scopes.set(request, scope);
+      // Callback style is required: downstream async work must be created
+      // inside the request's AsyncLocalStorage context.
+      scope.run(done);
+    });
+    const closeScope = async (request: FastifyRequest) => { await scopes.get(request)?.close(); };
+    // Release before the response resolves, including in Lambda environments
+    // which can freeze before an idle timer or onResponse callback completes.
+    app.addHook('onSend', async (request, _reply, payload) => { await closeScope(request); return payload; });
+    app.addHook('onResponse', closeScope);
+    app.addHook('onTimeout', closeScope);
+    app.addHook('onRequestAbort', closeScope);
+  }
   let nextPrune = 0;
   app.addHook('onRequest', async (request, reply) => {
     reply.header('Cache-Control', 'no-store, max-age=0');

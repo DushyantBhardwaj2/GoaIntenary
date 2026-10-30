@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, BedDouble, Bookmark, CalendarDays, Clapperboard, Clock3, Edit3, ListChecks, LockKeyhole, Phone, Plane, RefreshCw, Ticket, Trash2, Users, Wallet } from "lucide-react";
 import { api, core, dateRange, type TripDetail } from "@/lib/client";
@@ -9,16 +10,17 @@ import { Shell, SessionLoading, AuthGate } from "./shell";
 import { Busy, Dialog, Notice, SunMark } from "./ui";
 import { TripForm } from "./trip-form";
 import { Planner } from "./planner";
-import { SavedPlaces } from "./saved-places";
-import { BudgetPanel } from "./budget";
-import { PeoplePanel } from "./people";
-import { TripOverview } from "./trip-overview";
-import { TravelPanel } from "./travel-panel";
-import { StaysPanel } from "./stays-panel";
-import { BookingsPanel } from "./bookings-panel";
-import { ContactsPanel } from "./contacts-panel";
-import { ChecklistPanel } from "./checklist-panel";
-import { ReelPanel } from "./reel-panel";
+const panelLoading = () => <Busy text="Opening this part of your trip…" />;
+const SavedPlaces = dynamic(() => import("./saved-places").then(module => module.SavedPlaces), { loading: panelLoading });
+const BudgetPanel = dynamic(() => import("./budget").then(module => module.BudgetPanel), { loading: panelLoading });
+const PeoplePanel = dynamic(() => import("./people").then(module => module.PeoplePanel), { loading: panelLoading });
+const TripOverview = dynamic(() => import("./trip-overview").then(module => module.TripOverview), { loading: panelLoading });
+const TravelPanel = dynamic(() => import("./travel-panel").then(module => module.TravelPanel), { loading: panelLoading });
+const StaysPanel = dynamic(() => import("./stays-panel").then(module => module.StaysPanel), { loading: panelLoading });
+const BookingsPanel = dynamic(() => import("./bookings-panel").then(module => module.BookingsPanel), { loading: panelLoading });
+const ContactsPanel = dynamic(() => import("./contacts-panel").then(module => module.ContactsPanel), { loading: panelLoading });
+const ChecklistPanel = dynamic(() => import("./checklist-panel").then(module => module.ChecklistPanel), { loading: panelLoading });
+const ReelPanel = dynamic(() => import("./reel-panel").then(module => module.ReelPanel), { loading: panelLoading });
 
 const workspaceTabs = [
   { id: "plan", label: "The plan", icon: CalendarDays },

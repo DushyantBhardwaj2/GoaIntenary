@@ -26,7 +26,7 @@ function FoldButton({ open, panelId, label, overlay, onClick }: {
   );
 }
 
-export function PlanSection({ title, summary, summaryId, kicker, expand, children }: {
+export function PlanSection({ title, summary, summaryId, kicker, expand, children, defaultOpen = true, onOpenChange }: {
   title: string;
   summary: string;
   summaryId?: string;
@@ -34,22 +34,26 @@ export function PlanSection({ title, summary, summaryId, kicker, expand, childre
   /** Keep the detail open while a retryable error is showing. */
   expand?: boolean;
   children: ReactNode;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const storageKey = `goa-plan-section:${title}`;
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
   const titleId = useId();
   useEffect(() => {
     try {
-      if (window.localStorage.getItem(storageKey) === "closed") setOpen(false);
+      // Lazy sections start closed on each visit; opening them is the fetch trigger.
+      if (defaultOpen && window.localStorage.getItem(storageKey) === "closed") setOpen(false);
     } catch {
       /* Private browsing can block storage. The section stays open. */
     }
-  }, [storageKey]);
+  }, [storageKey, defaultOpen]);
   useEffect(() => {
     if (expand) setOpen(true);
   }, [expand]);
   const shown = open || Boolean(expand);
+  useEffect(() => { onOpenChange?.(shown); }, [onOpenChange, shown]);
   const toggle = () => {
     setOpen((value) => {
       const next = !value;

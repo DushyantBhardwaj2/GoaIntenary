@@ -19,6 +19,7 @@ import { dayLabel, overlappingIds, tripDays } from "@/lib/planner";
 import { money } from "@/lib/money";
 import { ActivityForm } from "./activity-form";
 import { ActivityExtras } from "./activity-extras";
+import { PlannerDataProvider } from "./planner-data";
 import { GoaMap } from "./goa-map";
 import { activityPoints } from "@/lib/map-points";
 import { Busy, Dialog, EmptyState, Notice } from "./ui";
@@ -134,7 +135,7 @@ export function Planner({ trip, onChanged }: { trip: Trip; onChanged: () => Prom
     });
 
   return (
-    <div className="planner-layout">
+    <PlannerDataProvider tripId={trip.id}><div className="planner-layout">
       <aside className="day-rail">
         <div>
           <span className="eyebrow">MAKE IT YOUR OWN</span>
@@ -476,6 +477,6 @@ export function Planner({ trip, onChanged }: { trip: Trip; onChanged: () => Prom
           {error && <Notice>{error}</Notice>}
         </Dialog>
       )}
-    </div>
+    </div></PlannerDataProvider>
   );
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 
 import { ApiError, api, core } from "@/lib/client";
 import type { Booking, BookingInput, BookingTargetType } from "@/lib/trip-planning-types";
 import { PlanSection } from "./plan-section";
+import { usePlannerData } from "./planner-data";
 import { Busy, Notice } from "./ui";
 import styles from "./bookings.module.css";
 
@@ -20,6 +21,8 @@ function problem(error: unknown, fallback: string): string {
 }
 
 export function BookingLinkPicker({ tripId, targetType, targetId }: { tripId: string; targetType: "activity" | "stay" | "travel"; targetId: string }) {
+  const shared = usePlannerData();
+  const [open, setOpen] = useState(false);
   const helpId = useId();
   const [booking, setBooking] = useState<Booking | null | undefined>(undefined);
   const [providerName, setProviderName] = useState("");
@@ -51,9 +54,9 @@ export function BookingLinkPicker({ tripId, targetType, targetId }: { tripId: st
     setLoading(true);
     setLoadError("");
     try {
-      const result = await api<{ bookings: Booking[] }>(`${core}/trips/${tripId}/bookings`);
+      const bookings = shared ? await shared.bookings() : (await api<{ bookings: Booking[] }>(`${core}/trips/${tripId}/bookings`)).bookings;
       if (generation.current !== current) return;
-      const match = result.bookings.find((item) => item.targetType === targetType && item.targetId.toLowerCase() === targetId.toLowerCase()) ?? null;
+      const match = bookings.find((item) => item.targetType === targetType && item.targetId.toLowerCase() === targetId.toLowerCase()) ?? null;
       setBooking(match);
       setProviderName(match?.providerName ?? "");
       setReference(match?.reference ?? "");
@@ -64,9 +67,9 @@ export function BookingLinkPicker({ tripId, targetType, targetId }: { tripId: st
     } finally {
       if (generation.current === current) setLoading(false);
     }
-  }, [targetId, targetType, tripId]);
+  }, [targetId, targetType, tripId, shared]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (open) void load(); }, [load, open]);
 
   const save = async () => {
     setBusy(true);
@@ -117,9 +120,9 @@ export function BookingLinkPicker({ tripId, targetType, targetId }: { tripId: st
     ? "The booking could not be loaded."
     : booking
       ? `${booking.providerName || "Provider not recorded"}${booking.reference ? ` · ${booking.reference}` : ""}`
-      : "No booking is linked yet. Saving does not purchase anything.";
+      : booking === undefined ? "Open to view or add a linked booking." : "No booking is linked yet. Saving does not purchase anything.";
 
-  return <PlanSection title={`${kindLabel[targetType]} booking`} summary={summary} expand={Boolean(loadError)}>
+  return <PlanSection title={`${kindLabel[targetType]} booking`} summary={summary} defaultOpen={false} onOpenChange={setOpen} expand={Boolean(loadError)}>
     <section className={styles.picker} aria-label={`${kindLabel[targetType]} booking`} aria-busy={loading || busy}>
     <p className={styles.hint} id={helpId}>Provider and reference for this plan. Saving here does not purchase anything.</p>
     {loadError && <Notice>{loadError} <button type="button" className="text-button" onClick={() => void load()}>Retry</button></Notice>}

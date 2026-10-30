@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { api, core, type User } from "@/lib/client";
+import { api, core } from "@/lib/client";
+import { useSession } from "./session";
 import type { ActivityComment } from "@/lib/trip-planning-types";
 import { PlanSection } from "./plan-section";
 import { Busy, Dialog, Notice } from "./ui";
@@ -36,9 +37,11 @@ function samePerson(left: string, right: string): boolean {
 }
 
 export function ActivityComments({ tripId, activityId, organiser }: { tripId: string; activityId: string; organiser: boolean }) {
+  const { user } = useSession();
+  const [open, setOpen] = useState(false);
   const composerId = useId();
   const [comments, setComments] = useState<ActivityComment[] | null>(null);
-  const [userId, setUserId] = useState("");
+  const userId = user?.id ?? "";
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [draft, setDraft] = useState("");
@@ -51,7 +54,6 @@ export function ActivityComments({ tripId, activityId, organiser }: { tripId: st
   if (seen.current !== `${tripId}\n${activityId}`) {
     seen.current = `${tripId}\n${activityId}`;
     setComments(null);
-    setUserId("");
     setLoadError("");
     setDraft("");
     setFormError("");
@@ -67,14 +69,10 @@ export function ActivityComments({ tripId, activityId, organiser }: { tripId: st
     setLoading(true);
     setLoadError("");
     try {
-      const [list, profile] = await Promise.all([
-        api<{ comments: ActivityComment[] }>(base),
-        api<{ user: User }>(`${core}/me`),
-      ]);
+      const list = await api<{ comments: ActivityComment[] }>(base);
       if (generation.current !== current) return;
       const ordered = [...list.comments].sort((left, right) => left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id));
       setComments(ordered);
-      setUserId(profile.user.id);
     } catch (err) {
       if (generation.current !== current) return;
       setLoadError(err instanceof Error ? err.message : "Unable to load comments.");
@@ -83,7 +81,7 @@ export function ActivityComments({ tripId, activityId, organiser }: { tripId: st
     }
   }, [base]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (open) void load(); }, [load, open]);
 
   const post = async (text: string) => {
     if (posting) return;
@@ -123,7 +121,7 @@ export function ActivityComments({ tripId, activityId, organiser }: { tripId: st
         ? "No comments yet. Newest is last."
         : `${comments.length} ${comments.length === 1 ? "comment" : "comments"}. Newest is last.`;
 
-  return <PlanSection kicker="NOTES" title="Comments" summary={summary} expand={Boolean(loadError)}>
+  return <PlanSection kicker="NOTES" title="Comments" summary={summary} defaultOpen={false} onOpenChange={setOpen} expand={Boolean(loadError)}>
     <section className={styles.thread} aria-label="Comments" aria-busy={loading}>
     <p className={styles.lead}>Newest is last. Each time is India time.</p>
     {loadError && <Notice>{loadError} <button type="button" className="text-button" onClick={() => void load()}>Retry</button></Notice>}

@@ -25,7 +25,7 @@ async function proxy(request: NextRequest, { params }: { params: Promise<{ path:
     const response = await fetch(`${base.replace(/\/$/, "")}/${path.join("/")}${request.nextUrl.search}`, {
       method: request.method, headers, cache: "no-store", redirect: "error",
       body,
-      signal: AbortSignal.timeout(12000)
+      signal: AbortSignal.timeout(30000)
     });
     const retryAfter = response.headers.get("retry-after");
     return new NextResponse(response.status === 204 ? null : await response.text(), { status: response.status, headers: { ...privateHeaders, "Content-Type": "application/json", ...(retryAfter && /^\d{1,6}$/.test(retryAfter) ? { "Retry-After": retryAfter } : {}) } });
